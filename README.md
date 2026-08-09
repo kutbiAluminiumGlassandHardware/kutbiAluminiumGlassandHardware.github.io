@@ -1,43 +1,29 @@
-# Kutbi Aluminium Glass & Hardware — Bangalore Local SEO Website
+# Kutbi Aluminium Glass & Hardware — Bangalore SEO Website
 
-Static GitHub Pages website for Kutbi Aluminium Glass & Hardware.
+Static GitHub Pages website for **Kutbi Aluminium Glass & Hardware**.
 
-## Target
-Primary local search topics:
-- Aluminium windows Bangalore
-- uPVC windows and doors Bangalore
-- Window and door repair Bangalore
-- Mosquito mesh Bangalore
-
-Supporting topics:
-- Broken glass replacement
-- Pigeon net installation
-- Aluminium doors
-- Aluminium fabrication
-- Sliding window repair
+## Main local SEO pages
+- Home
+- Aluminium Windows & Doors in Bangalore
+- uPVC Windows & Doors in Bangalore
+- Window & Door Repair in Bangalore
+- Mosquito Mesh in Bangalore
+- Glass Repair & Broken Glass Replacement in Bangalore
+- Aluminium Doors in Bangalore
+- Aluminium Fabrication in Bangalore
+- Contact
+- About
 
 ## Deployment
-Repository: `kutbi-aluminium-website`
-GitHub Pages domain:
-`https://kutbialuminiumglassandhardware.github.io/`
+Publish the repository with GitHub Pages using the `main` branch and root folder.
 
-Upload all files in this folder to the repository root and enable GitHub Pages from the `main` branch and `/ (root)`.
+Live URL:
+https://kutbialuminiumglassandhardware.github.io/
 
-## SEO structure
-- Unique title and meta description for each page
-- Clean service-specific URLs
-- Canonical URLs
-- `robots.txt`
-- `sitemap.xml`
-- LocalBusiness JSON-LD
-- Internal links between related service pages
-- Real Bengaluru service-area information
-- No fake reviews, fake locations, keyword-stuffed text, or hundreds of thin location pages
+## NAP
+Business: Kutbi Aluminium Glass & Hardware
+Phone: 9979204616
+Address: Kalena Agrahara, Bannerghatta Road, Opp. MLA Layout, Kothnur, Gottigere, Bengaluru, Karnataka 560076
 
-## Business
-Kutbi Aluminium Glass & Hardware
-Phone: +91 99792 04616
-Address: Kalena Agrahara, Bannerghatta Rd, Opp. MLA Layout, Kothnur, Gottigere, Bengaluru, Karnataka 560076
-
-## Important
-Do not add a separate page for every neighbourhood. Keep location content useful and genuine. Add real project photos, original service descriptions and genuine customer reviews as they become available.
+## SEO notes
+This version uses unique service pages, descriptive titles, meta descriptions, canonical URLs, LocalBusiness structured data, internal links, a sitemap and robots.txt. It avoids artificial keyword stuffing and does not claim services that were not included in the supplied service set.
