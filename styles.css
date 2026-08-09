@@ -31,3 +31,5 @@ footer{background:#111827;color:#e8edf5;padding:38px 20px}
 footer a{color:#d8e8ff}
 .small{font-size:14px;color:#687386}
 @media(max-width:700px){.nav{align-items:flex-start;flex-direction:column}nav{justify-content:flex-start}.hero{padding:48px 20px}section{padding:38px 20px}}
+
+.project-gallery-v3{padding:2.5rem 0}.project-gallery-v3 .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}.project-gallery-v3 figure{margin:0}.project-gallery-v3 img{display:block;width:100%;height:auto;border-radius:12px}.project-gallery-v3 figcaption{font-size:.9rem;margin-top:.5rem}.related-v3{padding:2rem 0}.related-v3 ul{columns:2;gap:2rem}@media(max-width:700px){.related-v3 ul{columns:1}}
