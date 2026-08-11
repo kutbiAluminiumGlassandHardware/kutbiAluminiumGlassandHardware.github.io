@@ -1,0 +1,19 @@
+KUTBI ALUMINIUM GLASS & HARDWARE — WEBSITE V5.2 FIXED PACKAGE
+
+Main fixes in this package:
+1. Fixed GitHub Pages project-site links that incorrectly started with /.
+2. Fixed all image paths: images are stored in the website root and all HTML pages now reference them correctly.
+3. Verified all local href/src links — no broken local references remain.
+4. Verified all HTML image references — no missing local images remain.
+5. Regenerated sitemap.xml using the actual flat page filenames.
+6. Regenerated image-sitemap.xml using the actual image locations.
+7. Corrected canonical URLs for the flat GitHub Pages page structure.
+8. Added .nojekyll for static GitHub Pages compatibility.
+9. Kept the Google Search Console verification file intact.
+
+UPLOAD:
+Upload the CONTENTS of this folder to the repository root, not the outer ZIP folder.
+After GitHub Pages rebuilds, hard-refresh the website.
+
+Website:
+https://kutbialuminiumglassandhardware.github.io/
