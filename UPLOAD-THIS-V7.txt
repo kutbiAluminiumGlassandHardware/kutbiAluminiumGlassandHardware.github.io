@@ -1,0 +1,9 @@
+KUTBI WEBSITE V7 - PHOTO FIX
+
+IMPORTANT: Upload ALL files in this folder to the ROOT of the GitHub repository.
+Do not create an images folder. The JPG photos are intentionally stored beside the HTML files.
+Every HTML image reference is now just filename.jpg, which works on GitHub Pages project sites.
+
+After uploading, confirm the repository file list shows: index.html and the .jpg files at the same level.
+
+Then wait for GitHub Pages to deploy.
