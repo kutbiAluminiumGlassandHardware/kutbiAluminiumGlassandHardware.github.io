@@ -1,0 +1,11 @@
+# V5 quick verification
+
+After deployment, open these image URLs in your browser:
+
+https://kutbialuminiumglassandhardware.github.io/upvc-sliding-door-project-bangalore.jpg
+https://kutbialuminiumglassandhardware.github.io/mosquito-mesh-window-project-bangalore.jpg
+https://kutbialuminiumglassandhardware.github.io/upvc-sliding-window-project-bangalore.jpg
+
+If each image opens directly, the root image files are available.
+
+Then open the home page and at least 5 service/area pages and confirm the photos render.
