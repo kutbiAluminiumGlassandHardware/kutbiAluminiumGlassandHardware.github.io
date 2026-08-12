@@ -1,0 +1,30 @@
+KUTBI REPAIR-FIRST V2 VALIDATION
+
+HTML pages checked: 75
+Local href/src references still unresolved: 15
+
+UNRESOLVED REFERENCES:
+jayanagar.html | src | images/upvc-sliding-window-project-bangalore.jpg
+jayanagar.html | src | images/upvc-sliding-door-project-bangalore.jpg
+jayanagar.html | src | images/mosquito-mesh-window-project-bangalore.jpg
+aluminium-windows-bannerghatta-road.html | src | assets/images/mosquito-mesh-door-installation.jpg
+aluminium-windows-bannerghatta-road.html | src | assets/images/window-mesh-installation.jpg
+aluminium-windows-bannerghatta-road.html | src | assets/images/window-mesh-project.jpg
+window-door-repair-bangalore.html | src | assets/images/mosquito-mesh-door-installation.jpg
+window-door-repair-bangalore.html | src | assets/images/window-mesh-installation.jpg
+window-door-repair-bangalore.html | src | assets/images/window-mesh-project.jpg
+upvc-doors-bangalore.html | src | assets/images/mosquito-mesh-door-installation.jpg
+upvc-doors-bangalore.html | src | assets/images/window-mesh-installation.jpg
+upvc-doors-bangalore.html | src | assets/images/window-mesh-project.jpg
+arekere.html | src | assets/images/mosquito-mesh-door-installation.jpg
+arekere.html | src | assets/images/window-mesh-installation.jpg
+arekere.html | src | assets/images/window-mesh-project.jpg
+
+Primary SEO positioning:
+Window Repair Bangalore
+Aluminium Window Repair
+uPVC Window Repair
+Sliding Window Repair
+Window Roller/Wheel Replacement
+Window Handle/Lock Replacement
+Window Rubber Beading Replacement
