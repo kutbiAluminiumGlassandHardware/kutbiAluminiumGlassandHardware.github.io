@@ -1,0 +1,8 @@
+KUTBI REPAIR-FIRST WEBSITE V3
+
+Upload the CONTENTS of this folder to the GitHub Pages repository root.
+Do not create another nested repository folder.
+
+Validation: all local href/src references and local image references are checked before upload.
+Primary focus: Window Repair Bangalore, Aluminium Window Repair, uPVC Window Repair,
+Sliding Window Repair, rollers/wheels, handles/locks and rubber beading.
