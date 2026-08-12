@@ -1,0 +1,8 @@
+KUTBI WEBSITE V5 — TEXT SITEMAP
+
+Primary sitemap: sitemap.txt (27 URLs)
+robots.txt points Google to sitemap.txt.
+The XML sitemap.xml is retained as a backup and is not the primary sitemap.
+
+After GitHub Pages deploys, open sitemap.txt in Chrome. It should display one
+absolute URL per line. Then submit sitemap.txt in Google Search Console.

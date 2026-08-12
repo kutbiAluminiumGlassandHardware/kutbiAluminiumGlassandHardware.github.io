@@ -1,0 +1,19 @@
+KUTBI REPAIR-FIRST WEBSITE V4
+
+V4 keeps the full website accessible but uses a reduced, repair-focused sitemap.
+Sitemap URLs: 27
+
+PRIMARY SEO CLUSTER:
+- Window Repair Bangalore
+- Aluminium Window Repair Bangalore
+- uPVC Window Repair Bangalore
+- Sliding Window Repair Bangalore
+- Window Roller/Wheel Replacement
+- Window Handle/Lock Replacement
+- Window Rubber Beading Replacement
+- Aluminium/uPVC Door Repair
+
+IMPORTANT:
+Upload the CONTENTS of this folder to the GitHub Pages repository root.
+Do not create a nested repository folder.
+After deployment, submit only: sitemap.xml in Google Search Console.
