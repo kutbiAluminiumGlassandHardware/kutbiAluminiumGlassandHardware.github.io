@@ -1,0 +1,7 @@
+KUTBI V6
+Sitemap URLs: 27
+Missing sitemap pages: 0
+Broken local href/src: 0
+Dedicated uPVC repair page: PASS
+Primary sitemap: sitemap.txt
+robots.txt points to sitemap.txt: PASS
