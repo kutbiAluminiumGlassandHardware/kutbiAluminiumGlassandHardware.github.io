@@ -1,0 +1,8 @@
+Files: 64
+HTML pages: 48
+Missing local links: 0
+Missing local images: 2
+Sitemap URLs: 45
+Copied images: 9
+('google2221ce3e01a7d36b.html', 'upvc-sliding-windows.jpg')
+('google2221ce3e01a7d36b (1).html', 'upvc-sliding-windows.jpg')
