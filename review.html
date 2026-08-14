@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Kutbi Aluminium Glass & Hardware Google review page">
+<title>Kutbi Aluminium Glass & Hardware – Review Us</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#1f334e;color:#222;padding:18px}.wrap{max-width:560px;margin:auto}.card{background:#fff;border-radius:20px;padding:24px;box-shadow:0 8px 30px rgba(0,0,0,.25)}.brand{font-weight:800;color:#f26a46;font-size:24px;text-align:center}.tag{text-align:center;color:#666;margin:6px 0 20px}.stars{text-align:center;font-size:32px;letter-spacing:3px}.intro{line-height:1.5;text-align:center}.option{border:1px solid #ddd;border-radius:15px;padding:15px;margin:12px 0;background:#fafafa}.review{line-height:1.45;margin:0 0 12px}.actions{display:flex;gap:8px}.copy{flex:1;border:0;border-radius:10px;padding:12px;background:#f26a46;color:#fff;font-size:15px;font-weight:700;cursor:pointer}.google{display:block;text-align:center;background:#1f334e;color:#fff;text-decoration:none;border-radius:12px;padding:16px;margin-top:20px;font-weight:800;font-size:17px}.note{font-size:13px;color:#666;line-height:1.45;margin-top:18px}.contact{text-align:center;font-weight:700;color:#1f334e;margin-top:18px}.copied{background:#238636!important}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="card">
+<div class="brand">KUTBI ALUMINIUM GLASS &amp; HARDWARE</div>
+<div class="tag">Your satisfaction, our motivation</div>
+<div class="stars">★★★★★</div>
+<p class="intro">Thank you for choosing Kutbi. If you were happy with our service, you can use one of the review ideas below. <b>Please edit it so it honestly reflects your experience.</b></p>
+
+<div class="option"><p class="review">Very good service by Kutbi Aluminium Glass &amp; Hardware. The work was completed professionally and on time.</p><div class="actions"><button class="copy" onclick="copyReview(this)">Copy Review</button></div></div>
+<div class="option"><p class="review">Excellent service and quick response. The team handled my aluminium/window repair work professionally.</p><div class="actions"><button class="copy" onclick="copyReview(this)">Copy Review</button></div></div>
+<div class="option"><p class="review">Good quality work and helpful service. I am satisfied with the work done by Kutbi Aluminium Glass &amp; Hardware.</p><div class="actions"><button class="copy" onclick="copyReview(this)">Copy Review</button></div></div>
+<div class="option"><p class="review">Prompt service, professional workmanship and good communication. Thank you Kutbi Aluminium Glass &amp; Hardware.</p><div class="actions"><button class="copy" onclick="copyReview(this)">Copy Review</button></div></div>
+<div class="option"><p class="review">I had a good experience with Kutbi Aluminium Glass &amp; Hardware. The service was convenient and the work was completed properly.</p><div class="actions"><button class="copy" onclick="copyReview(this)">Copy Review</button></div></div>
+
+<a class="google" href="https://g.page/r/CR-oHUvINf2HEAE/review" target="_blank" rel="noopener">⭐ Write a Google Review</a>
+<p class="note">After copying your chosen message, tap the button above, open the Google review box, paste the message, and make any changes you like before posting.</p>
+<div class="contact">Call / WhatsApp: 99792046156</div>
+</div></div>
+<script>
+async function copyReview(button){
+ const text=button.closest('.option').querySelector('.review').innerText.trim();
+ try{await navigator.clipboard.writeText(text)}catch(e){
+  const area=document.createElement('textarea');area.value=text;document.body.appendChild(area);area.select();document.execCommand('copy');area.remove();
+ }
+ const old=button.innerText;button.innerText='✓ Copied — Now Write Review';button.classList.add('copied');
+ setTimeout(()=>{button.innerText=old;button.classList.remove('copied')},2500);
+}
+</script>
+</body></html>
