@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kutbi Aluminium Glass & Hardware – Review Us</title>
+<meta name="description" content="Share your genuine experience with Kutbi Aluminium Glass & Hardware. Copy a suitable review message and continue to Google Reviews.">
+<style>
+body{font-family:Arial,sans-serif;margin:0;background:#f5f7fa;color:#1f2937}
+.wrap{max-width:680px;margin:auto;padding:24px 16px}
+.card{background:#fff;border-radius:18px;padding:24px;box-shadow:0 5px 24px rgba(0,0,0,.08)}
+h1{font-size:25px;margin:0 0 8px}
+.sub{color:#5b6472;line-height:1.5;margin-bottom:20px}
+.option{border:1px solid #e1e5ea;border-radius:14px;padding:16px;margin:12px 0;background:#fff}
+.tag{font-weight:700;font-size:14px;margin-bottom:8px}
+.msg{line-height:1.55;margin-bottom:12px}
+button,.google{display:inline-block;border:0;border-radius:10px;padding:11px 15px;font-weight:700;text-decoration:none;cursor:pointer}
+.copy{background:#111827;color:#fff}
+.google{background:#1a73e8;color:#fff;margin-top:18px;width:100%;text-align:center;box-sizing:border-box}
+.note{font-size:13px;color:#667085;margin-top:16px;line-height:1.45}
+.contact{text-align:center;margin-top:18px;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="card">
+<h1>Thank you for choosing Kutbi Aluminium Glass & Hardware</h1>
+<div class="sub">Choose the message that best matches the service you received. Tap <b>Copy Review</b>, then tap <b>Write a Google Review</b>. Please edit the message so it accurately reflects your genuine experience.</div>
+
+<div id="reviews"></div>
+<a class="google" href="https://g.page/r/CR-oHUvINf2HEAE/review" target="_blank" rel="noopener">★ Write a Google Review</a>
+<div class="note">These are optional templates. Please only post a review that is truthful and based on the service you received.</div>
+<div class="contact">Kutbi Aluminium Glass & Hardware · Bangalore</div>
+</div></div>
+
+<script>
+const reviews = [
+["Aluminium Window Repair","Very good service by Kutbi Aluminium Glass & Hardware. They repaired my aluminium sliding window and fixed the rollers and sliding problem. Professional and quick service."],
+["Sliding Window Repair","Excellent sliding window repair service. My aluminium window was difficult to slide, and Kutbi repaired the wheels and adjusted the window properly. Good workmanship."],
+["Window Track Repair","Very satisfied with Kutbi Aluminium Glass & Hardware. They repaired the aluminium window track and adjusted the sliding window smoothly. Professional service in Bangalore."],
+["Window Roller Replacement","Good service for aluminium window roller replacement. The window was not sliding properly, but Kutbi replaced the worn rollers and restored smooth operation."],
+["Window Handle & Lock Repair","Professional aluminium window repair service. Kutbi repaired the window handle and lock and checked the complete sliding mechanism. Good and reliable service."],
+["uPVC Window Repair","Very good uPVC window repair service. Kutbi fixed the sliding issue and adjusted the window hardware properly. Quick response and satisfactory work."],
+["uPVC Sliding Window Repair","Excellent service for uPVC sliding window repair. The window was jammed and difficult to operate, and the Kutbi team repaired it professionally."],
+["Broken Glass Replacement","Quick and professional broken glass replacement service by Kutbi Aluminium Glass & Hardware. The replacement was completed neatly and the window was restored properly."],
+["Window Glass Repair","Good window glass repair service in Bangalore. Kutbi handled the damaged glass replacement professionally and completed the work efficiently."],
+["Mosquito Mesh Replacement","Very happy with the mosquito mesh replacement service. Kutbi replaced the damaged window mesh neatly and fitted the new mosquito mesh properly."],
+["Mosquito Net Installation","Excellent mosquito net installation service by Kutbi. The mesh was fitted properly to the windows and the finishing was neat."],
+["Velcro Mosquito Mesh","Good service for Velcro mosquito mesh installation and replacement. The mesh was fitted neatly and is convenient to remove when required."],
+["Pigeon / Bird Net Installation","Very good pigeon net installation service. Kutbi installed the balcony bird net neatly and securely. Professional work and good finishing."],
+["Pigeon Net Replacement","Excellent pigeon net replacement service. The old damaged bird net was replaced properly and the balcony looks neat and protected."],
+["Invisible Grill Installation","Good service for invisible grill installation. Kutbi completed the work professionally with neat fitting and proper finishing."],
+["Aluminium Door Repair","Very good aluminium door repair service. Kutbi fixed the door hardware and adjusted the sliding operation properly. Quick and professional work."],
+["Sliding Door Repair","Excellent sliding door repair service by Kutbi Aluminium Glass & Hardware. The door was difficult to slide, and the team fixed the rollers and alignment."],
+["Aluminium & uPVC Services","Reliable aluminium and uPVC window and door service in Bangalore. Kutbi provided professional repair and hardware replacement with good workmanship."],
+["Multiple Kutbi Services","Very satisfied with Kutbi Aluminium Glass & Hardware. They provide aluminium window repair, sliding window repair, glass replacement, mosquito mesh and other window and door services. Professional work."],
+["General Kutbi Service","Excellent service by Kutbi Aluminium Glass & Hardware. Quick response, professional workmanship and good service. Recommended for aluminium and uPVC window, door, glass and mesh work."]
+];
+
+const box=document.getElementById("reviews");
+reviews.forEach((r,i)=>{
+ const el=document.createElement("div"); el.className="option";
+ el.innerHTML=`<div class="tag">${r[0]}</div><div class="msg" id="m${i}">“${r[1]}”</div><button class="copy" onclick="copyReview(${i},this)">Copy Review</button>`;
+ box.appendChild(el);
+});
+async function copyReview(i,btn){
+ const msg=document.getElementById("m"+i).innerText.replace(/^“|”$/g,"");
+ try{await navigator.clipboard.writeText(msg);}
+ catch(e){
+  const t=document.createElement("textarea");t.value=msg;document.body.appendChild(t);t.select();document.execCommand("copy");t.remove();
+ }
+ btn.textContent="Copied ✓"; setTimeout(()=>btn.textContent="Copy Review",1600);
+}
+</script>
+</body>
+</html>
