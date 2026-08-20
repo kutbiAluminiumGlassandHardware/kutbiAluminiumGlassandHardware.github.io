@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
+
 Sitemap: https://kutbialuminiumglassandhardware.github.io/sitemap.xml
-Sitemap: https://kutbialuminiumglassandhardware.github.io/image-sitemap.xml
