@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "id": "1787336936760",
+    "title": "Broken glass replacement done by kutbi team at electronic City bangalore",
+    "service": "Aluminium Window Repair",
+    "area": "Electronic City bangalore",
+    "date": "2026-08-21",
+    "description": "Damage glass remove and new glass installation done by kitbi on time",
+    "images": [
+      {
+        "path": "images/projects/1787336926995-broken-glass-replacement-done-by-kutbi-team-at-electronic-city-bangalore-electro-before-1.jpg",
+        "type": "before"
+      },
+      {
+        "path": "images/projects/1787336930047-broken-glass-replacement-done-by-kutbi-team-at-electronic-city-bangalore-electro-after-2.jpg",
+        "type": "after"
+      }
+    ]
+  }
+]
