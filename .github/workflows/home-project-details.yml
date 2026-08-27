@@ -1,0 +1,40 @@
+name: Build full project details on homepage
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  update-home:
+    if: !contains(github.event.head_commit.message, '[home-projects]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build homepage project section
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,re,html
+          p=Path('index.html'); s=p.read_text(encoding='utf-8')
+          data=json.loads(Path('images/projects/projects.json').read_text(encoding='utf-8'))
+          data.sort(key=lambda x:(x.get('date',''),int(x.get('id','0'))),reverse=True)
+          def e(x): return html.escape(str(x or ''))
+          cards=[]
+          for x in data:
+            imgs=x.get('images') or []
+            pics=''.join(f'<div><img src="{e(i.get("path"))}" alt="{e(i.get("alt") or (x.get("service", "Kutbi project")+" "+x.get("area", "Bengaluru")+" project photo"))}" loading="lazy"><small>{"Before" if i.get("type")=="before" else "After / Completed Work"}</small></div>' for i in imgs)
+            desc=e(x.get('description') or x.get('seoDescription'))
+            cards.append(f'<article class="home-project"><h3>{e(x.get("seoTitle") or x.get("title"))}</h3><div class="home-project-meta"><b>🛠️ {e(x.get("service"))}</b><b>📍 {e(x.get("area"))}</b><b>📅 {e(x.get("date"))}</b></div><div class="home-project-photos">{pics}</div><div class="home-project-description">{desc.replace(chr(10),"<br>")}</div><div class="home-project-actions"><a class="btn" href="tel:+919979204616">📞 Call Kutbi</a><a class="btn whatsapp" href="https://wa.me/919979204616?text=Hello%20Kutbi%2C%20I%20need%20similar%20work">💬 WhatsApp</a></div></article>')
+          section='<section class="project-gallery"><div class="wrap"><div class="section-head"><div class="eyebrow">Real completed work</div><h2>See Kutbi’s Real Project Photos &amp; Full Details</h2><p>Explore our completed aluminium, uPVC, mosquito mesh, glass and repair projects. Every uploaded project appears here with its photos, service, location, date and full project details.</p></div><div class="home-project-list">'+''.join(cards)+'</div><p class="center"><a class="btn" href="project-gallery.html">View All Our Projects →</a></p></div></section>'
+          s=re.sub(r'<section class="project-gallery">.*?</section>',section,s,count=1,flags=re.S)
+          style='<style>.home-project-list{display:grid;gap:28px}.home-project{background:#fff;border:1px solid #e1e6ed;border-radius:18px;padding:24px;box-shadow:0 10px 30px rgba(6,24,63,.08)}.home-project h3{font-size:25px;color:#06183f;margin:0 0 12px}.home-project-meta{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:18px}.home-project-meta b{background:#f4f7fb;border-radius:999px;padding:7px 12px;font-size:14px}.home-project-photos{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.home-project-photos div{overflow:hidden;border-radius:12px;background:#f4f6f8}.home-project-photos img{display:block;width:100%;height:260px;object-fit:cover}.home-project-photos small{display:block;padding:8px 10px;font-weight:800}.home-project-description{margin:18px 0;color:#4d5862;white-space:normal}.home-project-actions{margin-top:10px}@media(max-width:620px){.home-project{padding:17px}.home-project h3{font-size:21px}.home-project-photos img{height:230px}}</style>'
+          s=s.replace('</head>',style+'</head>',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit homepage update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "Update homepage with full project details [home-projects]"
+          git push
