@@ -1,0 +1,1 @@
+Individual project pages use project.html?id=PROJECT_ID. The gallery should link each project card to this page so future Add New Project entries automatically have full details.
