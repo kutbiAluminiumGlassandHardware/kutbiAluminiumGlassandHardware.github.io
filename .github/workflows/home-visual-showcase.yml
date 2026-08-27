@@ -1,0 +1,37 @@
+name: Update Homepage Visual Showcase
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'images/projects/projects.json'
+      - '.github/workflows/home-visual-showcase.yml'
+permissions:
+  contents: write
+jobs:
+  showcase:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replace quick proof with real project visual showcase
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          start = s.find('<section class="quick-proof">')
+          end = s.find('</section>', start) + len('</section>') if start >= 0 else -1
+          if start < 0 or end <= start:
+              print('Quick-proof section already replaced or not found; no change needed.')
+              raise SystemExit(0)
+          replacement = r'''<section class="visual-showcase" aria-label="Real Kutbi work showcase"><div class="wrap"><div style="text-align:center"><div class="eyebrow">REAL KUTBI WORK</div><h2>See What We Do</h2><p class="section-intro">Real photos from Kutbi's completed projects — window repair, uPVC service, mosquito mesh, glass replacement and more.</p></div><div id="visual-projects" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin-top:22px"><div class="project-loading">Loading real Kutbi work…</div></div><p class="center" style="margin-top:22px"><a class="btn" href="project-gallery.html">View All Our Projects →</a></p></div><style>.visual-showcase{padding:42px 0;background:#f6f8fb}.visual-card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 6px 22px rgba(6,24,63,.10);border:1px solid #e8edf3}.visual-card img{display:block;width:100%;height:190px;object-fit:cover}.visual-card .vbody{padding:14px}.visual-card h3{font-size:17px;margin:0 0 6px}.visual-card p{font-size:14px;margin:0;color:#59636e}.visual-card a{display:inline-block;margin-top:10px;font-weight:800}.visual-badge{display:inline-block;margin-top:8px;padding:5px 9px;border-radius:20px;background:#eef3f7;font-size:12px;font-weight:800}</style><script>async function loadVisualShowcase(){const box=document.getElementById('visual-projects');try{const r=await fetch('images/projects/projects.json?ts='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error();const data=await r.json();const items=(Array.isArray(data)?data:[]).sort((a,b)=>new Date(b.date||0)-new Date(a.date||0)||(Number(b.id)||0)-(Number(a.id)||0)).slice(0,4);if(!items.length){box.innerHTML='<div class="project-loading">Real projects will appear here after upload.</div>';return}box.innerHTML='';items.forEach(p=>{const img=(p.images||[]).find(x=>x.type==='after')||(p.images||[])[0];if(!img||!img.path)return;const card=document.createElement('article');card.className='visual-card';card.innerHTML='<img loading="lazy" src="'+img.path+'" alt="'+(img.alt||((p.service||'Kutbi project')+' in '+(p.area||'Bangalore'))).replace(/"/g,'&quot;')+'"><div class="vbody"><h3></h3><span class="visual-badge"></span><p></p><a href="project.html?id='+encodeURIComponent(p.id)+'">View Full Project →</a></div>';card.querySelector('h3').textContent=p.title||p.seoTitle||'Kutbi Completed Project';card.querySelector('.visual-badge').textContent=p.service||'Kutbi Service';card.querySelector('p').textContent=p.area||'Bengaluru';box.appendChild(card)})}catch(e){box.innerHTML='<div class="project-loading">Project photos are updating. <a href="project-gallery.html">View all our projects →</a></div>'}}loadVisualShowcase();</script></section>'''
+          p.write_text(s[:start] + replacement + s[end:], encoding='utf-8')
+          PY
+      - name: Commit homepage showcase
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet || git commit -m 'Replace homepage quick proof with real project visual showcase'
+          git push
