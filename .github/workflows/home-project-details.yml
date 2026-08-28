@@ -5,11 +5,15 @@ on:
     branches:
       - main
     paths:
-      - 'images/projects/**'
+      - 'images/projects/projects.json'
   workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: homepage-project-details
+  cancel-in-progress: false
 
 jobs:
   update-home:
@@ -37,8 +41,8 @@ jobs:
               raise SystemExit('images/projects/projects.json not found')
 
           s = p.read_text(encoding='utf-8')
-          data = json.loads(projects_file.read_text(encoding='utf-8'))
-          if not isinstance(data, list):
+          raw = json.loads(projects_file.read_text(encoding='utf-8'))
+          if not isinstance(raw, list):
               raise SystemExit('projects.json must contain a JSON array')
 
           def project_id(x):
@@ -47,7 +51,38 @@ jobs:
               except (TypeError, ValueError):
                   return 0
 
-          data.sort(key=lambda x: (x.get('date', ''), project_id(x)), reverse=True)
+          def clean_area(value):
+              v = str(value or '').strip()
+              replacements = {
+                  'White field Bangalore': 'Whitefield, Bengaluru',
+                  'White field, Bangalore': 'Whitefield, Bengaluru',
+                  'White field': 'Whitefield',
+                  'white field bangalore': 'Whitefield, Bengaluru',
+                  'white field': 'Whitefield',
+                  'Bangalore': 'Bengaluru',
+                  'bangalore': 'Bengaluru',
+              }
+              return replacements.get(v, v)
+
+          def key(x):
+              title = re.sub(r'\\s+', ' ', str(x.get('title', '')).strip().lower())
+              service = re.sub(r'\\s+', ' ', str(x.get('service', '')).strip().lower())
+              area = clean_area(x.get('area')).lower()
+              date = str(x.get('date', '')).strip()
+              return (title, service, area, date)
+
+          # Protect the homepage from accidental duplicate records while keeping
+          # the newest record for each identical project signature.
+          data = []
+          seen = set()
+          for item in sorted(raw, key=lambda x: (str(x.get('date', '')), project_id(x)), reverse=True):
+              k = key(item)
+              if k in seen:
+                  continue
+              seen.add(k)
+              item = dict(item)
+              item['area'] = clean_area(item.get('area'))
+              data.append(item)
 
           def e(x):
               return html.escape(str(x or ''))
@@ -57,9 +92,9 @@ jobs:
               imgs = x.get('images') or []
               pics = ''.join(
                   f'<div><img src="{e(i.get("path"))}" '
-                  f'alt="{e(i.get("alt") or (x.get("service", "Kutbi project") + " " + x.get("area", "Bengaluru") + " project photo"))}" '
+                  f'alt="{e(i.get("alt") or (x.get("service", "Kutbi project") + " in " + clean_area(x.get("area", "Bengaluru"))))}" '
                   f'loading="lazy"><small>{"Before" if i.get("type") == "before" else "After / Completed Work"}</small></div>'
-                  for i in imgs
+                  for i in imgs if i.get('path')
               )
               desc = e(x.get('description') or x.get('seoDescription'))
               cards.append(
@@ -67,7 +102,7 @@ jobs:
                   f'<h3>{e(x.get("seoTitle") or x.get("title"))}</h3>'
                   f'<div class="home-project-meta">'
                   f'<b>🛠️ {e(x.get("service"))}</b>'
-                  f'<b>📍 {e(x.get("area"))}</b>'
+                  f'<b>📍 {e(clean_area(x.get("area")))}</b>'
                   f'<b>📅 {e(x.get("date"))}</b>'
                   f'</div>'
                   f'<div class="home-project-photos">{pics}</div>'
@@ -101,7 +136,7 @@ jobs:
               s = s.replace('</head>', style + '</head>', 1)
 
           p.write_text(s, encoding='utf-8')
-          print(f'Homepage project section rebuilt from {len(data)} projects.')
+          print(f'Homepage project section rebuilt from {len(data)} unique project records.')
           PY
 
       - name: Commit homepage update
@@ -112,6 +147,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No homepage changes required."
           else
-            git commit -m "Update homepage with full project details"
+            git commit -m "Update homepage with reliable project details"
             git push
           fi
