@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'images/projects/projects.json'
+      - '.github/workflows/home-project-details.yml'
   workflow_dispatch:
 
 permissions:
@@ -22,6 +23,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Build homepage project section
         shell: bash
@@ -32,27 +35,27 @@ jobs:
           import re
           import html
 
-          p = Path('index.html')
+          homepage = Path('index.html')
           projects_file = Path('images/projects/projects.json')
 
-          if not p.exists():
+          if not homepage.exists():
               raise SystemExit('index.html not found')
           if not projects_file.exists():
               raise SystemExit('images/projects/projects.json not found')
 
-          s = p.read_text(encoding='utf-8')
+          page = homepage.read_text(encoding='utf-8')
           raw = json.loads(projects_file.read_text(encoding='utf-8'))
           if not isinstance(raw, list):
               raise SystemExit('projects.json must contain a JSON array')
 
-          def project_id(x):
+          def project_id(item):
               try:
-                  return int(x.get('id', '0'))
+                  return int(item.get('id', '0'))
               except (TypeError, ValueError):
                   return 0
 
           def clean_area(value):
-              v = str(value or '').strip()
+              value = str(value or '').strip()
               replacements = {
                   'White field Bangalore': 'Whitefield, Bengaluru',
                   'White field, Bangalore': 'Whitefield, Bengaluru',
@@ -62,55 +65,70 @@ jobs:
                   'Bangalore': 'Bengaluru',
                   'bangalore': 'Bengaluru',
               }
-              return replacements.get(v, v)
+              return replacements.get(value, value)
 
-          def key(x):
-              title = re.sub(r'\\s+', ' ', str(x.get('title', '')).strip().lower())
-              service = re.sub(r'\\s+', ' ', str(x.get('service', '')).strip().lower())
-              area = clean_area(x.get('area')).lower()
-              date = str(x.get('date', '')).strip()
-              return (title, service, area, date)
+          def signature(item):
+              norm = lambda value: re.sub(r'\s+', ' ', str(value or '').strip().lower())
+              return (
+                  norm(item.get('title')),
+                  norm(item.get('service')),
+                  clean_area(item.get('area')).lower(),
+                  str(item.get('date', '')).strip(),
+              )
 
-          # Protect the homepage from accidental duplicate records while keeping
-          # the newest record for each identical project signature.
+          # Sort newest first and remove accidental duplicate records.
           data = []
           seen = set()
           for item in sorted(raw, key=lambda x: (str(x.get('date', '')), project_id(x)), reverse=True):
-              k = key(item)
-              if k in seen:
+              sig = signature(item)
+              if sig in seen:
                   continue
-              seen.add(k)
+              seen.add(sig)
               item = dict(item)
               item['area'] = clean_area(item.get('area'))
               data.append(item)
 
-          def e(x):
-              return html.escape(str(x or ''))
+          def esc(value):
+              return html.escape(str(value or ''))
 
           cards = []
-          for x in data:
-              imgs = x.get('images') or []
-              pics = ''.join(
-                  f'<div><img src="{e(i.get("path"))}" '
-                  f'alt="{e(i.get("alt") or (x.get("service", "Kutbi project") + " in " + clean_area(x.get("area", "Bengaluru"))))}" '
-                  f'loading="lazy"><small>{"Before" if i.get("type") == "before" else "After / Completed Work"}</small></div>'
-                  for i in imgs if i.get('path')
-              )
-              desc = e(x.get('description') or x.get('seoDescription'))
+          for item in data:
+              images = item.get('images') or []
+              photos = []
+              for image in images:
+                  path = image.get('path')
+                  if not path:
+                      continue
+                  image_type = str(image.get('type') or '').lower()
+                  label = 'Before' if image_type == 'before' else ('After / Completed Work' if image_type in ('after', 'work', 'completed') else 'Project Photo')
+                  alt = image.get('alt') or f"{item.get('service', 'Kutbi project')} in {clean_area(item.get('area', 'Bengaluru'))}"
+                  photos.append(
+                      f'<div><img src="{esc(path)}" alt="{esc(alt)}" loading="lazy"><small>{esc(label)}</small></div>'
+                  )
+
+              description = esc(item.get('description') or item.get('seoDescription'))
+              title = item.get('seoTitle') or item.get('title') or 'Kutbi Completed Project'
+              service = item.get('service') or 'Kutbi Service'
+              area = clean_area(item.get('area') or 'Bengaluru')
+              date = item.get('date') or ''
+              project_url = f'project.html?id={project_id(item)}' if project_id(item) else 'project-gallery.html'
+
               cards.append(
-                  f'<article class="home-project">'
-                  f'<h3>{e(x.get("seoTitle") or x.get("title"))}</h3>'
-                  f'<div class="home-project-meta">'
-                  f'<b>🛠️ {e(x.get("service"))}</b>'
-                  f'<b>📍 {e(clean_area(x.get("area")))}</b>'
-                  f'<b>📅 {e(x.get("date"))}</b>'
-                  f'</div>'
-                  f'<div class="home-project-photos">{pics}</div>'
-                  f'<div class="home-project-description">{desc.replace(chr(10), "<br>")}</div>'
-                  f'<div class="home-project-actions">'
-                  f'<a class="btn" href="tel:+919979204616">📞 Call Kutbi</a>'
-                  f'<a class="btn whatsapp" href="https://wa.me/919979204616?text=Hello%20Kutbi%2C%20I%20need%20similar%20work">💬 WhatsApp</a>'
-                  f'</div></article>'
+                  '<article class="home-project">'
+                  f'<h3>{esc(title)}</h3>'
+                  '<div class="home-project-meta">'
+                  f'<b>🛠️ {esc(service)}</b>'
+                  f'<b>📍 {esc(area)}</b>'
+                  f'<b>📅 {esc(date)}</b>'
+                  '</div>'
+                  f'<div class="home-project-photos">{"".join(photos)}</div>'
+                  f'<div class="home-project-description">{description.replace(chr(10), "<br>")}</div>'
+                  '<div class="home-project-actions">'
+                  f'<a class="btn" href="{esc(project_url)}">🔎 View Full Project</a>'
+                  '<a class="btn" href="tel:+919979204616">📞 Call Kutbi</a>'
+                  '<a class="btn whatsapp" href="https://wa.me/919979204616?text=Hello%20Kutbi%2C%20I%20need%20similar%20work">💬 WhatsApp</a>'
+                  '</div>'
+                  '</article>'
               )
 
           section = (
@@ -126,27 +144,27 @@ jobs:
           )
 
           pattern = r'<section class="project-gallery">.*?</section>'
-          if not re.search(pattern, s, flags=re.S):
+          if not re.search(pattern, page, flags=re.S):
               raise SystemExit('Existing project-gallery section not found in index.html')
-          s = re.sub(pattern, section, s, count=1, flags=re.S)
+          page = re.sub(pattern, section, page, count=1, flags=re.S)
 
-          style = '''<style>.home-project-list{display:grid;gap:28px}.home-project{background:#fff;border:1px solid #e1e6ed;border-radius:18px;padding:24px;box-shadow:0 10px 30px rgba(6,24,63,.08)}.home-project h3{font-size:25px;color:#06183f;margin:0 0 12px}.home-project-meta{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:18px}.home-project-meta b{background:#f4f7fb;border-radius:999px;padding:7px 12px;font-size:14px}.home-project-photos{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.home-project-photos div{overflow:hidden;border-radius:12px;background:#f4f6f8}.home-project-photos img{display:block;width:100%;height:260px;object-fit:cover}.home-project-photos small{display:block;padding:8px 10px;font-weight:800}.home-project-description{margin:18px 0;color:#4d5862;white-space:normal}.home-project-actions{margin-top:10px}@media(max-width:620px){.home-project{padding:17px}.home-project h3{font-size:21px}.home-project-photos img{height:230px}}</style>'''
+          if '.home-project-list{' not in page:
+              style = '''<style>.home-project-list{display:grid;gap:28px}.home-project{background:#fff;border:1px solid #e1e6ed;border-radius:18px;padding:24px;box-shadow:0 10px 30px rgba(6,24,63,.08)}.home-project h3{font-size:25px;color:#06183f;margin:0 0 12px}.home-project-meta{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:18px}.home-project-meta b{background:#f4f7fb;border-radius:999px;padding:7px 12px;font-size:14px}.home-project-photos{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.home-project-photos div{overflow:hidden;border-radius:12px;background:#f4f6f8}.home-project-photos img{display:block;width:100%;height:260px;object-fit:cover}.home-project-photos small{display:block;padding:8px 10px;font-weight:800}.home-project-description{margin:18px 0;color:#4d5862;white-space:normal}.home-project-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}@media(max-width:620px){.home-project{padding:17px}.home-project h3{font-size:21px}.home-project-photos img{height:230px}}</style>'''
+              page = page.replace('</head>', style + '</head>', 1)
 
-          if '</head>' in s and '.home-project-list{' not in s:
-              s = s.replace('</head>', style + '</head>', 1)
-
-          p.write_text(s, encoding='utf-8')
-          print(f'Homepage project section rebuilt from {len(data)} unique project records.')
+          homepage.write_text(page, encoding='utf-8')
+          print(f'Homepage rebuilt from {len(data)} unique project records.')
           PY
 
       - name: Commit homepage update
+        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
           if git diff --cached --quiet; then
             echo "No homepage changes required."
-          else
-            git commit -m "Update homepage with reliable project details"
-            git push
+            exit 0
           fi
+          git commit -m "Update homepage with full project details"
+          git push origin HEAD:main
