@@ -76,12 +76,10 @@ jobs:
               desc=esc(x.get('description') or x.get('seoDescription')).replace(chr(10),'<br>')
               service=x.get('service') or 'Kutbi Service'; loc=area(x.get('area') or 'Bengaluru'); date=x.get('date') or ''
               url=f'project.html?id={pid(x)}' if pid(x) else 'project-gallery.html'
-              cards.append('<article class="home-project">'+f'<h3>{esc(title)}</h3><div class="home-project-meta"><b>🛠️ {esc(service)}</b><b>📍 {esc(loc)}</b><b>📅 {esc(date)}</b></div><div class="home-project-photos">{"".join(photos)}</div><div class="home-project-description">{desc}</div><div class="home-project-actions"><a class="btn" href="{esc(url)}">🔎 View Full Project</a><a class="btn" href="tel:+919979204616">📞 Call Kutbi</a><a class="btn whatsapp" href="https://wa.me/919979204616?text=Hello%20Kutbi%2C%20I%20need%20similar%20work">💬 WhatsApp</a></div></article>')
+              cards.append('<article class="home-project">'+f'<h3>{esc(title)}</h3><div class="home-project-meta"><b>🛠️ {esc(service)}</b><b>📍 {esc(loc)}</b><b>📅 {esc(date)}</b></div><div class="home-project-photos>{"".join(photos)}</div><div class="home-project-description">{desc}</div><div class="home-project-actions"><a class="btn" href="{esc(url)}">🔎 View Full Project</a><a class="btn" href="tel:+919979204616">📞 Call Kutbi</a><a class="btn whatsapp" href="https://wa.me/919979204616?text=Hello%20Kutbi%2C%20I%20need%20similar%20work">💬 WhatsApp</a></div></article>')
 
           section='<section class="project-gallery"><div class="wrap"><div class="section-head"><div class="eyebrow">Real completed work</div><h2>See Kutbi’s Real Project Photos &amp; Full Details</h2><p>Explore our completed aluminium, uPVC, mosquito mesh, glass and repair projects. Every uploaded project appears here with its photos, service, location, date and full project details.</p></div><div class="home-project-list">'+''.join(cards)+'</div><p class="center"><a class="btn" href="project-gallery.html">View All Our Projects →</a></p></div></section>'
 
-          # Replace the first existing section. If another process removed it,
-          # insert a fresh section before the core-services section instead of failing.
           pattern=r'<section class="project-gallery">.*?</section>'
           if re.search(pattern,page,re.S):
               page=re.sub(pattern,section,page,count=1,flags=re.S)
@@ -96,8 +94,18 @@ jobs:
               style='''<style>.home-project-list{display:grid;gap:28px}.home-project{background:#fff;border:1px solid #e1e6ed;border-radius:18px;padding:24px;box-shadow:0 10px 30px rgba(6,24,63,.08)}.home-project h3{font-size:25px;color:#06183f;margin:0 0 12px}.home-project-meta{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:18px}.home-project-meta b{background:#f4f7fb;border-radius:999px;padding:7px 12px;font-size:14px}.home-project-photos{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.home-project-photos div{overflow:hidden;border-radius:12px;background:#f4f6f8}.home-project-photos img{display:block;width:100%;height:260px;object-fit:cover}.home-project-photos small{display:block;padding:8px 10px;font-weight:800}.home-project-description{margin:18px 0;color:#4d5862;white-space:normal}.home-project-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}@media(max-width:620px){.home-project{padding:17px}.home-project h3{font-size:21px}.home-project-photos img{height:230px}}</style>'''
               if '</head>' in page: page=page.replace('</head>',style+'</head>',1)
 
+          # Keep the homepage Core Services section focused on Kutbi's main repair,
+          # mesh, glass and bird-net services. The cards retain direct links to the
+          # existing service pages so no new or duplicate SEO pages are created.
+          core_pattern=r'<section>\s*<div class="wrap">\s*<div class="eyebrow">Our core services</div>.*?<p class="center"><a class="btn" href="services\.html">View All Kutbi Services</a></p>\s*</div>\s*</section>'
+          core_section='''<section><div class="wrap"><div class="eyebrow">Our core services</div><h2>Aluminium &amp; uPVC Window &amp; Door Repair, Mosquito Mesh, Glass &amp; Bird Net Services</h2><p class="section-intro">Specialist repair, replacement and installation services for aluminium and uPVC windows and doors, mosquito mesh, broken glass and pigeon or bird nets across Bengaluru.</p><div class="grid"><div class="card"><span class="card-icon">🪟</span><h3>Aluminium Window &amp; Door Repair</h3><p>Sliding window and door repair, wheels and rollers, tracks, alignment, handles, locks, rubber beading and related hardware.</p><a href="aluminium-window-repair-bangalore.html">Explore aluminium repair →</a></div><div class="card"><span class="card-icon">🔧</span><h3>uPVC Window &amp; Door Repair</h3><p>Repair for stuck, jammed or difficult-to-slide uPVC windows and doors, including wheels, rollers, locks, handles and related hardware.</p><a href="upvc-window-repair-bangalore.html">Explore uPVC repair →</a></div><div class="card"><span class="card-icon">🦟</span><h3>Mosquito Mesh Installation &amp; Replacement</h3><p>New mesh installation and replacement of old, torn or damaged mesh for aluminium and uPVC windows and doors, including suitable Velcro, magnetic and pleated options.</p><a href="mosquito-mesh-bangalore.html">Explore mosquito mesh →</a></div><div class="card"><span class="card-icon">🪟</span><h3>Broken Glass Replacement</h3><p>Broken or cracked glass replacement for suitable aluminium and uPVC windows and doors with professional fitting and finishing.</p><a href="broken-glass-replacement-bangalore.html">Explore glass replacement →</a></div><div class="card"><span class="card-icon">🕊️</span><h3>Pigeon &amp; Bird Net Installation</h3><p>Balcony and opening bird-net installation, replacement and repair for suitable residential and commercial applications.</p><a href="pigeon-net-bangalore.html">Explore bird net →</a></div></div><p class="center"><a class="btn" href="services.html">View All Kutbi Services</a></p></div></section>'''
+          if re.search(core_pattern,page,re.S):
+              page=re.sub(core_pattern,core_section,page,count=1,flags=re.S)
+          else:
+              raise SystemExit('Core Services section not found; refusing to overwrite homepage.')
+
           homepage.write_text(page,encoding='utf-8')
-          print(f'Homepage rebuilt from {len(data)} unique project records.')
+          print(f'Homepage rebuilt from {len(data)} unique project records and Core Services refreshed.')
           PY
 
       - name: Commit homepage update
