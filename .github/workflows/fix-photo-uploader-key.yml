@@ -1,0 +1,30 @@
+name: Fix Photo Gallery uploader key field
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-photo-uploader-key.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add dedicated photo gallery key field
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('admin-upload-project.html')
+          s=p.read_text()
+          marker='<label for="photoFiles">Choose photos</label>'
+          block='<label for="photoToken">GitHub Access Key / Token</label><input id="photoToken" type="password" autocomplete="off" placeholder="github_pat_…"><p class="hint private">Enter your GitHub access key here. It is used only in this browser and is not saved.</p>'
+          if 'id="photoToken"' not in s:
+              s=s.replace(marker,block+marker,1)
+          s=s.replace('admin-add-photos.js?v=20260902-6','admin-add-photos.js?v=20260902-7')
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add admin-upload-project.html
+          git commit -m 'Add GitHub key field to Photo Gallery uploader' || exit 0
+          git push
