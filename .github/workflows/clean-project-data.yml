@@ -1,0 +1,132 @@
+name: Clean and Strengthen Project Data
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'images/projects/projects.json'
+      - '.github/workflows/clean-project-data.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Clean project metadata and descriptions
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+
+          path = Path('images/projects/projects.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          changed = False
+
+          def setv(obj, key, value):
+              global changed
+              if obj.get(key) != value:
+                  obj[key] = value
+                  changed = True
+
+          fixes = {
+              '1788151582184': {
+                  'service': 'uPVC Door Repair',
+                  'area': 'JP Nagar, Bengaluru',
+              },
+              '1788151496057': {
+                  'service': 'uPVC Door Repair',
+                  'area': 'Vijayanagar, Bengaluru',
+                  'alt': 'uPVC Sliding Door Repair and Wheel Replacement in Vijayanagar Bengaluru - Kutbi Aluminium Glass & Hardware',
+              },
+              '1787890889806': {
+                  'title': 'Aluminium Sliding Window Wheel Replacement & Service in Whitefield, Bengaluru',
+                  'area': 'Whitefield, Bengaluru',
+                  'service': 'Aluminium Window Wheel Replacement',
+              },
+              '1787890774702': {
+                  'area': 'Whitefield, Bengaluru',
+                  'service': 'Aluminium Window Rubber Beading Replacement',
+              },
+              '1787760946851': {
+                  'title': 'Mosquito Net Installation Completed at Lemon Leaf, Kodigehalli, Krishnarajapuram, Bengaluru',
+                  'area': 'Krishnarajapuram, Bengaluru',
+              },
+              '1787760376597': {
+                  'title': 'uPVC Sliding Window Wheel Replacement & Track Repair Completed at Kalena Agrahara, Bengaluru',
+                  'area': 'Kalena Agrahara, Bengaluru',
+                  'service': 'uPVC Sliding Window Repair',
+              },
+              '1787581093326': {
+                  'service': 'Aluminium Door Repair',
+                  'area': 'Gottigere, Bannerghatta Road, Bengaluru',
+              },
+              '1787480554671': {
+                  'title': 'uPVC Sliding Door Lock Repair & Replacement Completed in Begur, Bengaluru',
+                  'service': 'uPVC Door Repair',
+                  'area': 'Begur, Bengaluru',
+                  'seoTitle': 'uPVC Sliding Door Lock Repair & Replacement Completed in Begur, Bengaluru',
+                  'seoDescription': 'uPVC sliding door lock repair and replacement completed by Kutbi Aluminium Glass & Hardware in Begur, Bengaluru. Professional repair for sliding door locks, handles, locking mechanisms and related uPVC door hardware.',
+              },
+              '1787375656869': {
+                  'title': 'Aluminium Sliding Window Wheel Replacement & Service in Gottigere, Bannerghatta Road, Bengaluru',
+                  'service': 'Aluminium Window Wheel Replacement',
+                  'area': 'Gottigere, Bannerghatta Road, Bengaluru',
+                  'description': 'Aluminium sliding window wheel replacement and servicing completed by Kutbi Aluminium Glass & Hardware in Gottigere, Bannerghatta Road, Bengaluru. Worn window rollers were replaced and the sliding mechanism was serviced to restore smoother movement.\n\nWork completed:\n- Aluminium sliding window wheel replacement\n- Roller and sliding mechanism service\n- Window movement adjustment\n- Final operation check\n\nIf your aluminium sliding window is stuck, difficult to slide, noisy or not moving properly, contact Kutbi for professional window wheel replacement and repair in Bengaluru.',
+                  'seoTitle': 'Aluminium Sliding Window Wheel Replacement & Service in Gottigere, Bannerghatta Road, Bengaluru',
+                  'seoDescription': 'Aluminium sliding window wheel replacement and servicing completed in Gottigere, Bannerghatta Road, Bengaluru by Kutbi Aluminium Glass & Hardware.',
+              },
+              '1787336936760': {
+                  'title': 'Broken Glass Replacement for Sliding Window Completed in Electronic City, Bengaluru',
+                  'service': 'Broken Glass Replacement',
+                  'area': 'Electronic City, Bengaluru',
+                  'description': 'Broken glass replacement for a sliding window completed by Kutbi Aluminium Glass & Hardware in Electronic City, Bengaluru. The damaged glass was removed and replaced with suitable new glass for the existing window, followed by a final fit and safety check.\n\nService completed:\n- Sliding window broken glass replacement\n- Damaged glass removal\n- New glass fitting\n- Final installation and inspection\n\nKutbi provides suitable broken glass replacement for aluminium and uPVC windows and doors across Bengaluru, subject to site inspection and glass availability.',
+                  'seoTitle': 'Broken Glass Replacement for Sliding Window in Electronic City, Bengaluru | Kutbi',
+                  'seoDescription': 'Broken glass replacement for a sliding window completed in Electronic City, Bengaluru by Kutbi Aluminium Glass & Hardware.',
+              },
+          }
+
+          for project in data:
+              pid = project.get('id')
+              if pid in fixes:
+                  f = fixes[pid]
+                  for key, value in f.items():
+                      if key == 'alt':
+                          for image in project.get('images', []):
+                              setv(image, 'alt', value)
+                      else:
+                          setv(project, key, value)
+
+          # Normalize common spelling/casing mistakes without changing the actual location.
+          replacements = {
+              'Gottigerry Bannerghatta road': 'Gottigere, Bannerghatta Road, Bengaluru',
+              'White field Bangalore': 'Whitefield, Bengaluru',
+              'Gottigere, Bannerghatta Road, Bangalore.': 'Gottigere, Bannerghatta Road, Bengaluru',
+          }
+          for project in data:
+              area = project.get('area')
+              if area in replacements:
+                  setv(project, 'area', replacements[area])
+
+          if changed:
+              path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          else:
+              print('No project-data changes required.')
+
+      - name: Commit cleanup changes
+        shell: bash
+        run: |
+          if git diff --quiet -- images/projects/projects.json; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add images/projects/projects.json
+          git commit -m 'Clean and strengthen project metadata and content'
+          git push
