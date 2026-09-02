@@ -1,18 +1,183 @@
-const O='kutbiAluminiumGlassandHardware',R='kutbiAluminiumGlassandHardware.github.io',B='main',F='images/photos',MAX=900*1024,LIMIT=150,$=id=>document.getElementById(id);let ready=[],original=[],cache=[];
+const OWNER='kutbiAluminiumGlassandHardware';
+const REPO='kutbiAluminiumGlassandHardware.github.io';
+const BRANCH='main';
+const PHOTO_DIR='images/photos';
+const MAX_SIZE=900*1024;
+const MAX_FILES=150;
+const $=id=>document.getElementById(id);
+
 const AREAS=['Bannerghatta Road','Gottigere','Arekere','Hulimavu','JP Nagar','BTM Layout','Jayanagar','Begur','Electronic City','HSR Layout','Whitefield','Koramangala','Basavanagudi','Sarjapura','Kudlu Gate','Marathahalli','Defence Colony Indiranagar','Akshaya Nagar','Arekere MICO Layout 2nd Stage','Lakshmi Layout'];
 const SERVICES=['Aluminium Window Repair','Aluminium Sliding Window Repair','Aluminium Window Wheel Replacement','Aluminium Window Roller Replacement','Aluminium Window Alignment','Aluminium Window Track Repair','Aluminium Window Lock Replacement','Aluminium Window Handle Replacement','Aluminium Window Rubber Beading Replacement','Aluminium Window Glass Replacement','Aluminium Sliding Door Repair','Aluminium Door Repair','Aluminium Door Wheel Replacement','Aluminium Door Lock Replacement','Aluminium Door Handle Replacement','Sliding Window Repair','Sliding Window Wheel Replacement','Sliding Window Roller Replacement','Sliding Window Alignment','Sliding Window Lock Replacement','Sliding Door Repair','Sliding Door Wheel Replacement','Sliding Door Lock Replacement','uPVC Window Repair','uPVC Sliding Window Repair','uPVC Window Wheel Replacement','uPVC Window Roller Replacement','uPVC Window Alignment','uPVC Window Lock Replacement','uPVC Window Handle Replacement','uPVC Window Rubber Beading Replacement','uPVC Window Glass Replacement','uPVC Door Repair','uPVC Sliding Door Repair','uPVC Door Wheel Replacement','uPVC Door Lock Replacement','uPVC Door Handle Replacement','Broken Glass Replacement','Window Glass Replacement','Glass Repair','Mosquito Mesh Installation','Mosquito Mesh Repair','Mosquito Mesh Replacement','Velcro Mosquito Mesh','Magnetic Mosquito Mesh','Pleated Mosquito Mesh','Netlon Mosquito Mesh','Mosquito Mesh Door Installation','Mosquito Mesh Window Installation','Pigeon Net Installation','Balcony Bird Net Installation','Bird Net Replacement','Invisible Grill Installation','Cloth Dryer Installation','Cloth Dryer Repair','Other Kutbi Service'];
-const api=(u,o={})=>fetch(u,o).then(async r=>{let d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.message||`GitHub request failed (${r.status})`);return d});
-const hdr=t=>({Authorization:'Bearer '+t,Accept:'application/vnd.github+json','Content-Type':'application/json'}),url=`https://api.github.com/repos/${O}/${R}/contents/`;
-const msg=(s,ok=true)=>{let r=$('photoResult');r.hidden=false;r.className='result '+(ok?'ok':'err');r.textContent=s},bar=(n,t)=>{let b=$('photoProgressBar');if(b)b.style.width=(t?Math.round(n/t*100):0)+'%'};
-const norm=s=>String(s||'').toLowerCase().replace(/[_-]+/g,' ').replace(/\s+/g,' ').trim().replace(/\bbangalore\b/g,'bengaluru'),slug=s=>norm(s).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,70)||'photo';
-async function manifest(t){let d=await api(url+F+'/photos.json?ref='+B+'&t='+Date.now(),{headers:hdr(t)}),a=[];try{a=JSON.parse(decodeURIComponent(escape(atob(String(d.content).replace(/\n/g,'')))))}catch(e){try{a=JSON.parse(atob(String(d.content).replace(/\n/g,'')))}catch(e2){throw Error('photos.json could not be read.')}}if(!Array.isArray(a))throw Error('photos.json must contain an array.');return{a,sha:d.sha}}
-async function save(a,sha,t){let body={message:'Update Kutbi photo gallery metadata',content:btoa(unescape(encodeURIComponent(JSON.stringify(a,null,2)+'\n'))),branch:B,sha};for(let n=0;n<4;n++){let r=await fetch(url+F+'/photos.json',{method:'PUT',headers:hdr(t),body:JSON.stringify(body)}),d=await r.json().catch(()=>({}));if(r.ok)return d;if(r.status!==409)throw Error(d.message||'Could not save photo metadata.');let m=await manifest(t);body.sha=m.sha}throw Error('Could not save photo metadata after retry.')}
-function image(f){return new Promise((res,rej)=>{let u=URL.createObjectURL(f),i=new Image();i.onload=()=>{URL.revokeObjectURL(u);res(i)};i.onerror=()=>{URL.revokeObjectURL(u);rej(Error('Could not read '+f.name))};i.src=u})}
-async function optimize(f){if(f.size<=MAX&&/^image\/(jpeg|jpg)$/i.test(f.type))return f;let i=await image(f),w=i.naturalWidth,h=i.naturalHeight,s=Math.min(1,2400/Math.max(w,h));w=Math.max(500,Math.round(w*s));h=Math.max(500,Math.round(h*s));for(let q=.82,step=0;step<24;step++){let c=document.createElement('canvas');c.width=w;c.height=h;let ctx=c.getContext('2d');if(!ctx)throw Error('Browser image processing is unavailable.');ctx.drawImage(i,0,0,w,h);let b=await new Promise(r=>c.toBlob(r,'image/jpeg',q));if(b&&b.size<=MAX)return new File([b],f.name.replace(/\.[^.]+$/,'')+'.jpg',{type:'image/jpeg'});if(q>.48)q-=.04;else{w=Math.max(500,Math.round(w*.82));h=Math.max(500,Math.round(h*.82));q=.76}}throw Error('Could not reduce '+f.name+' below 900 KB.')}
-const b64=f=>new Promise((res,rej)=>{let r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=()=>rej(Error('Could not read '+f.name));r.readAsDataURL(f)});
-function infer(s){let n=norm(s),service=SERVICES.find(x=>x!=='Other Kutbi Service'&&n.includes(norm(x)))||'';if(!service){if(/wheel|roller/.test(n))service=/upvc/.test(n)?'uPVC Window Wheel Replacement':'Aluminium Window Wheel Replacement';else if(/rubber|beading/.test(n))service='Aluminium Window Rubber Beading Replacement';else if(/glass|broken/.test(n))service='Broken Glass Replacement';else if(/mesh|mosquito|netlon|velcro|magnetic|pleated/.test(n))service='Mosquito Mesh Replacement';else if(/lock|handle/.test(n))service=/upvc/.test(n)?'uPVC Door Repair':'Aluminium Window Repair';else if(/door/.test(n))service=/upvc/.test(n)?'uPVC Door Repair':'Aluminium Door Repair';else service=/upvc/.test(n)?'uPVC Window Repair':'Aluminium Window Repair'}let a=AREAS.find(x=>n.includes(norm(x)));return{service,area:a?a+', Bengaluru':'Bengaluru'}}
-async function optimizeAndUpload(){let t=$('photoToken').value.trim(),fs=[...($('photoFiles').files||[])],s=$('photoService').value.trim(),a=$('photoArea').value.trim(),desc=$('photoDescription').value.trim(),b=$('optimizePhotos');if(!fs.length)return msg('Please select photos first.',false);if(fs.length>LIMIT)return msg('Maximum 150 photos per batch.',false);if(!t)return msg('Please enter your GitHub access token.',false);b.disabled=true;ready=[];original=[];bar(0,fs.length);try{for(let i=0;i<fs.length;i++){msg(`Optimizing photo ${i+1} of ${fs.length}…\n${fs[i].name}`);ready.push(await optimize(fs[i]));original.push(fs[i]);bar(i+1,fs.length)}msg(`✓ ${ready.length} photos optimized.\nStarting upload…`);let m=await manifest(t),stamp=Date.now(),add=[];for(let i=0;i<ready.length;i++){let inf=infer(original[i].name+' '+desc),service=s||inf.service,area=a?a+', Bengaluru':inf.area,name=`${slug(service)}-${slug(area)}-${stamp}-${String(i+1).padStart(3,'0')}.jpg`;msg(`Uploading photo ${i+1} of ${ready.length}…\n${name}\n${Math.round(ready[i].size/1024)} KB`);await api(url+F+'/'+name,{method:'PUT',headers:hdr(t),body:JSON.stringify({message:'Add Kutbi gallery photo '+name,content:await b64(ready[i]),branch:B})});add.push({id:String(stamp+i),path:F+'/'+name,type:'photo',service,area,date:new Date().toISOString().slice(0,10),sizeMB:(ready[i].size/1048576).toFixed(2),originalName:original[i].name,seoFileName:name,description,alt:`${service} in ${area} - Kutbi Aluminium Glass & Hardware`,keywords:[service,area,'Bengaluru','Window Repair Bangalore','Mosquito Mesh Bangalore','Kutbi Aluminium Glass & Hardware'],metadataSource:s||a?'manual':'auto'});bar(i+1,ready.length)}msg('Saving photo gallery metadata…');let latest=await manifest(t);await save([...add,...latest.a],latest.sha,t);msg(`✓ ${add.length} photos optimized and uploaded successfully.\n✓ SEO filename + ALT text + service + area + keywords saved.`);$('photoFiles').value='';ready=[];original=[];await loadExisting()}catch(e){msg('Upload failed safely.\n'+e.message+'\n\nAlready uploaded photos remain safe. You can retry.',false)}finally{b.disabled=false}}
-async function loadExisting(){let t=$('photoToken')?.value.trim(),sel=$('photoExisting');if(!t||!sel)return;try{sel.innerHTML='<option>Loading photos…</option>';let m=await manifest(t);cache=m.a;sel.innerHTML='<option value="">Select uploaded photo</option>'+cache.map((x,i)=>`<option value="${i}">${x.service||'Uncategorised'} · ${x.area||'Bengaluru'} · ${x.originalName||x.seoFileName||x.path}</option>`).join('')}catch(e){sel.innerHTML='<option>Could not load photos</option>'}}
-function fill(){let i=Number($('photoExisting').value),x=cache[i];if(!x)return;$('photoService').value=x.service||'';$('photoArea').value=String(x.area||'').replace(/,?\s*bengaluru$/i,'');$('photoDescription').value=x.description||''}
-async function updateExisting(){let t=$('photoToken').value.trim(),i=Number($('photoExisting').value);if(!t||!cache[i])return msg('Enter your token and select an uploaded photo.',false);try{let m=await manifest(t),x={...cache[i],service:$('photoService').value||cache[i].service,area:$('photoArea').value?$('photoArea').value+', Bengaluru':cache[i].area,description:$('photoDescription').value||cache[i].description||''};x.alt=`${x.service} in ${x.area} - Kutbi Aluminium Glass & Hardware`;x.metadataSource='manual';let p=m.a.findIndex(v=>String(v.id)===String(cache[i].id)||v.path===cache[i].path);if(p<0)throw Error('Photo not found.');m.a[p]=x;await save(m.a,m.sha,t);cache=m.a;msg('✓ Photo SEO metadata updated.')}catch(e){msg('Update failed: '+e.message,false)}}
-function init(){if($('optimizePhotos'))$('optimizePhotos').onclick=optimizeAndUpload;if($('photoToken'))$('photoToken').onblur=loadExisting;if($('photoExisting'))$('photoExisting').onchange=fill;if($('photoUpdate'))$('photoUpdate').onclick=updateExisting;if($('photoFiles'))$('photoFiles').onchange=()=>{ready=[];original=[];bar(0,0);let n=$('photoFiles').files.length;if(n>LIMIT)msg(`You selected ${n} photos. Maximum is 150 per batch.`,false);else if(n)msg(`${n} photos selected. Press “Optimize & Upload Photos”.`)}}document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init):init();
+
+const API='https://api.github.com/repos/'+OWNER+'/'+REPO+'/contents/';
+const headers=token=>({Authorization:'Bearer '+token,Accept:'application/vnd.github+json','Content-Type':'application/json'});
+const show=(text,ok=true)=>{const el=$('photoResult');if(!el)return;el.hidden=false;el.className='result '+(ok?'ok':'err');el.textContent=text;};
+const progress=(n,total)=>{const el=$('photoProgressBar');if(el)el.style.width=(total?Math.round(n/total*100):0)+'%';};
+const normalize=s=>String(s||'').toLowerCase().replace(/[_-]+/g,' ').replace(/\s+/g,' ').trim().replace(/\bbangalore\b/g,'bengaluru');
+const slug=s=>normalize(s).replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,70)||'photo';
+
+async function request(path,options={}){
+  const response=await fetch(API+path,options);
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.message||('GitHub request failed ('+response.status+')'));
+  return data;
+}
+
+function decodeBase64(value){
+  const raw=String(value||'').replace(/\n/g,'');
+  try{return decodeURIComponent(escape(atob(raw)));}catch(e){return atob(raw);}
+}
+function encodeBase64(value){return btoa(unescape(encodeURIComponent(value)));}
+
+async function readManifest(token){
+  const data=await request(PHOTO_DIR+'/photos.json?ref='+BRANCH+'&cache='+Date.now(),{headers:headers(token)});
+  let items;
+  try{items=JSON.parse(decodeBase64(data.content));}catch(e){throw new Error('Photo gallery metadata file could not be read.');}
+  if(!Array.isArray(items))throw new Error('Photo gallery metadata must be a JSON array.');
+  return {items,sha:data.sha};
+}
+
+async function writeManifest(items,sha,token){
+  let currentSha=sha;
+  for(let attempt=0;attempt<5;attempt++){
+    const body={message:'Update Kutbi photo gallery metadata',content:encodeBase64(JSON.stringify(items,null,2)+'\n'),branch:BRANCH,sha:currentSha};
+    const response=await fetch(API+PHOTO_DIR+'/photos.json',{method:'PUT',headers:headers(token),body:JSON.stringify(body)});
+    const data=await response.json().catch(()=>({}));
+    if(response.ok)return data;
+    if(response.status!==409)throw new Error(data.message||'Could not save photo gallery metadata.');
+    currentSha=(await readManifest(token)).sha;
+  }
+  throw new Error('Photo gallery metadata changed during upload. Please retry.');
+}
+
+function readImage(file){
+  return new Promise((resolve,reject)=>{
+    const url=URL.createObjectURL(file);
+    const img=new Image();
+    img.onload=()=>{URL.revokeObjectURL(url);resolve(img);};
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Could not read '+file.name));};
+    img.src=url;
+  });
+}
+
+async function optimize(file){
+  if(file.size<=MAX_SIZE&&/^image\/(jpeg|jpg)$/i.test(file.type))return file;
+  const img=await readImage(file);
+  let width=img.naturalWidth,height=img.naturalHeight;
+  const scale=Math.min(1,2400/Math.max(width,height));
+  width=Math.max(500,Math.round(width*scale));
+  height=Math.max(500,Math.round(height*scale));
+  for(let pass=0;pass<28;pass++){
+    const canvas=document.createElement('canvas');
+    canvas.width=width;canvas.height=height;
+    const ctx=canvas.getContext('2d');
+    if(!ctx)throw new Error('Browser image processing is unavailable.');
+    ctx.drawImage(img,0,0,width,height);
+    const quality=Math.max(.42,.84-(pass%8)*.05);
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',quality));
+    if(blob&&blob.size<=MAX_SIZE)return new File([blob],file.name.replace(/\.[^.]+$/,'')+'.jpg',{type:'image/jpeg',lastModified:Date.now()});
+    if(pass>=7){width=Math.max(500,Math.round(width*.82));height=Math.max(500,Math.round(height*.82));}
+  }
+  throw new Error('Could not reduce '+file.name+' below 900 KB.');
+}
+
+function toBase64(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result).split(',')[1]);
+    reader.onerror=()=>reject(new Error('Could not read '+file.name));
+    reader.readAsDataURL(file);
+  });
+}
+
+function infer(text){
+  const n=normalize(text);
+  let service=SERVICES.find(x=>x!=='Other Kutbi Service'&&n.includes(normalize(x)))||'';
+  if(!service){
+    if(/wheel|roller/.test(n))service=/upvc/.test(n)?'uPVC Window Wheel Replacement':'Aluminium Window Wheel Replacement';
+    else if(/rubber|beading/.test(n))service='Aluminium Window Rubber Beading Replacement';
+    else if(/broken|glass/.test(n))service='Broken Glass Replacement';
+    else if(/mesh|mosquito|netlon|velcro|magnetic|pleated/.test(n))service='Mosquito Mesh Replacement';
+    else if(/lock|handle/.test(n))service=/upvc/.test(n)?'uPVC Door Repair':'Aluminium Window Repair';
+    else if(/door/.test(n))service=/upvc/.test(n)?'uPVC Door Repair':'Aluminium Door Repair';
+    else service=/upvc/.test(n)?'uPVC Window Repair':'Aluminium Window Repair';
+  }
+  const found=AREAS.find(x=>n.includes(normalize(x)));
+  return {service,area:found?found+', Bengaluru':'Bengaluru'};
+}
+
+async function uploadOne(file,original,index,total,token,manualService,manualArea,description,stamp){
+  const detected=infer(original.name+' '+description);
+  const service=manualService||detected.service;
+  const area=manualArea?manualArea+', Bengaluru':detected.area;
+  const filename=slug(service)+'-'+slug(area)+'-'+stamp+'-'+String(index+1).padStart(3,'0')+'.jpg';
+  show('Uploading photo '+(index+1)+' of '+total+'...\n'+filename+'\n'+Math.round(file.size/1024)+' KB');
+  await request(PHOTO_DIR+'/'+filename,{method:'PUT',headers:headers(token),body:JSON.stringify({message:'Add Kutbi gallery photo '+filename,content:await toBase64(file),branch:BRANCH})});
+  progress(index+1,total);
+  return {id:String(stamp+index),path:PHOTO_DIR+'/'+filename,type:'photo',service,area,date:new Date().toISOString().slice(0,10),sizeMB:(file.size/1048576).toFixed(2),originalName:original.name,seoFileName:filename,description:description||'',alt:service+' in '+area+' - Kutbi Aluminium Glass & Hardware',keywords:[service,area,'Bengaluru','Window Repair Bangalore','Mosquito Mesh Bangalore','Kutbi Aluminium Glass & Hardware'],metadataSource:(manualService||manualArea)?'manual':'auto'};
+}
+
+async function optimizeAndUpload(){
+  const token=($('photoToken')?.value||'').trim();
+  const files=[...($('photoFiles')?.files||[])];
+  const manualService=($('photoService')?.value||'').trim();
+  const manualArea=($('photoArea')?.value||'').trim();
+  const description=($('photoDescription')?.value||'').trim();
+  const button=$('optimizePhotos');
+  if(!files.length)return show('Please select photos first.',false);
+  if(files.length>MAX_FILES)return show('Maximum 150 photos per batch. You selected '+files.length+'.',false);
+  if(!token)return show('Please enter your GitHub access token.',false);
+  button.disabled=true;ready=[];original=[];progress(0,files.length);
+  try{
+    show('Checking GitHub access and photo gallery...');
+    await readManifest(token);
+    for(let i=0;i<files.length;i++){
+      show('Optimizing photo '+(i+1)+' of '+files.length+'...\n'+files[i].name);
+      ready.push(await optimize(files[i]));original.push(files[i]);progress(i+1,files.length);
+    }
+    const stamp=Date.now();
+    const added=[];
+    for(let i=0;i<ready.length;i++)added.push(await uploadOne(ready[i],original[i],i,ready.length,token,manualService,manualArea,description,stamp));
+    show('Saving photo gallery metadata...');
+    const latest=await readManifest(token);
+    await writeManifest(added.concat(latest.items),latest.sha,token);
+    show('✓ '+added.length+' photos optimized and uploaded successfully.\n✓ SEO filename, ALT text, service, area and keywords saved.');
+    $('photoFiles').value='';ready=[];original=[];await loadExisting();
+  }catch(error){
+    show('Upload failed.\n'+(error.message||error)+'\n\nNo existing gallery photos were deleted. Photos already uploaded in this batch remain safe. Fix the issue and retry.',false);
+  }finally{button.disabled=false;}
+}
+
+let cache=[];
+async function loadExisting(){
+  const token=($('photoToken')?.value||'').trim(),select=$('photoExisting');
+  if(!token||!select)return;
+  try{
+    select.innerHTML='<option>Loading photos...</option>';
+    const manifest=await readManifest(token);cache=manifest.items;
+    select.innerHTML='<option value="">Select uploaded photo</option>'+cache.map((item,i)=>'<option value="'+i+'">'+(item.service||'Uncategorised')+' · '+(item.area||'Bengaluru')+' · '+(item.originalName||item.seoFileName||item.path)+'</option>').join('');
+  }catch(error){select.innerHTML='<option>Could not load photos</option>';}
+}
+function fillExisting(){const i=Number($('photoExisting')?.value),item=cache[i];if(!item)return;$('photoService').value=item.service||'';$('photoArea').value=String(item.area||'').replace(/,?\s*bengaluru$/i,'');$('photoDescription').value=item.description||'';}
+async function updateExisting(){
+  const token=($('photoToken')?.value||'').trim(),i=Number($('photoExisting')?.value),selected=cache[i];
+  if(!token||!selected)return show('Enter your token and select an uploaded photo.',false);
+  try{
+    const manifest=await readManifest(token);
+    const updated={...selected,service:$('photoService').value||selected.service,area:$('photoArea').value?$('photoArea').value+', Bengaluru':selected.area,description:$('photoDescription').value||selected.description||''};
+    updated.alt=updated.service+' in '+updated.area+' - Kutbi Aluminium Glass & Hardware';updated.metadataSource='manual';
+    const pos=manifest.items.findIndex(item=>String(item.id)===String(selected.id)||item.path===selected.path);
+    if(pos<0)throw new Error('Photo not found in gallery metadata.');
+    manifest.items[pos]=updated;await writeManifest(manifest.items,manifest.sha,token);cache=manifest.items;show('✓ Photo SEO metadata updated.');
+  }catch(error){show('Update failed: '+error.message,false);}
+}
+
+function init(){
+  if($('optimizePhotos'))$('optimizePhotos').addEventListener('click',optimizeAndUpload);
+  if($('photoToken'))$('photoToken').addEventListener('blur',loadExisting);
+  if($('photoExisting'))$('photoExisting').addEventListener('change',fillExisting);
+  if($('photoUpdate'))$('photoUpdate').addEventListener('click',updateExisting);
+  if($('photoFiles'))$('photoFiles').addEventListener('change',()=>{ready=[];original=[];progress(0,0);const count=$('photoFiles').files.length;if(count>MAX_FILES)show('You selected '+count+' photos. Maximum is 150 per batch.',false);else if(count)show(count+' photos selected. Press “Optimize & Upload Photos”.');});
+}
+let ready=[],original=[];
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
