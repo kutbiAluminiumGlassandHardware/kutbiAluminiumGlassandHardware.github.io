@@ -16,6 +16,16 @@
   areaSelect.size=Math.min(8, Math.max(4, areaSelect.options.length));
   areaSelect.setAttribute('aria-label','Select one or more project areas');
 
+  // Update the existing page copy so it accurately describes the new AI behavior.
+  const serviceSelect=document.getElementById('photoService');
+  if(serviceSelect?.options?.length) serviceSelect.options[0].textContent='AI auto-detect service from image';
+  const serviceHint=serviceSelect?.parentElement?.querySelector('.hint');
+  if(serviceHint) serviceHint.textContent='Leave blank to let AI identify the service from the actual photo. The filename is not used to choose the service.';
+  const description=document.getElementById('photoDescription');
+  const descriptionLabel=description?.previousElementSibling;
+  if(descriptionLabel) descriptionLabel.textContent='Extra Photo Context (optional)';
+  if(description) description.placeholder='Optional extra context. AI will still analyze the actual image to identify the service and write the final description.';
+
   function selectedAreas(){
     return Array.from(areaSelect.selectedOptions||[])
       .map(o=>String(o.value||o.textContent||'').trim())
