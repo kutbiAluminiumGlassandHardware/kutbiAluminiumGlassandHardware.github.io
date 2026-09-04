@@ -28,10 +28,8 @@ jobs:
       - name: Check required secrets
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          KUTBI_GITHUB_TOKEN: ${{ secrets.KUTBI_GITHUB_TOKEN }}
         run: |
           test -n "$OPENAI_API_KEY" || { echo 'Missing OPENAI_API_KEY secret.'; exit 1; }
-          test -n "$KUTBI_GITHUB_TOKEN" || { echo 'Missing KUTBI_GITHUB_TOKEN secret.'; exit 1; }
 
       - name: Analyze incoming photos from the actual images
         env:
@@ -101,7 +99,7 @@ jobs:
 
       - name: Commit analyzed photos so GitHub Pages can publish them
         env:
-          KUTBI_GITHUB_TOKEN: ${{ secrets.KUTBI_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           git config user.name 'Kutbi AI Photo Gallery'
@@ -109,7 +107,7 @@ jobs:
           git add images/photos
           if git diff --cached --quiet; then echo 'No changes to commit.'; exit 0; fi
           git commit -m 'AI classify and optimize Kutbi gallery photos'
-          git remote set-url origin "https://x-access-token:${KUTBI_GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           for attempt in 1 2 3 4 5; do
             git fetch origin main
             git rebase origin/main || { git rebase --abort || true; sleep $((attempt*2)); continue; }
