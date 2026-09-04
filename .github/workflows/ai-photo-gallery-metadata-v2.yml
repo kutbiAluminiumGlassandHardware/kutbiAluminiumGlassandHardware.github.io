@@ -1,0 +1,120 @@
+name: AI Photo Gallery Metadata
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'images/photos/incoming/**'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kutbi-ai-photo-gallery-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze-photos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Check required secrets
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          KUTBI_GITHUB_TOKEN: ${{ secrets.KUTBI_GITHUB_TOKEN }}
+        run: |
+          test -n "$OPENAI_API_KEY" || { echo 'Missing OPENAI_API_KEY secret.'; exit 1; }
+          test -n "$KUTBI_GITHUB_TOKEN" || { echo 'Missing KUTBI_GITHUB_TOKEN secret.'; exit 1; }
+
+      - name: Analyze incoming photos from the actual images
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import base64, json, os, re, time
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+          from urllib.error import HTTPError
+
+          INCOMING=Path('images/photos/incoming'); PHOTO_DIR=Path('images/photos'); MANIFEST=PHOTO_DIR/'photos.json'
+          MODEL='gpt-5.6-luna'; API='https://api.openai.com/v1/responses'
+          SERVICES='''Aluminium Window Repair|Aluminium Sliding Window Repair|Aluminium Window Wheel Replacement|Aluminium Window Roller Replacement|Aluminium Window Alignment|Aluminium Window Track Repair|Aluminium Window Lock Replacement|Aluminium Window Handle Replacement|Aluminium Window Rubber Beading Replacement|Aluminium Window Glass Replacement|Aluminium Sliding Door Repair|Aluminium Door Repair|Aluminium Door Wheel Replacement|Aluminium Door Lock Replacement|Aluminium Door Handle Replacement|Sliding Window Repair|Sliding Window Wheel Replacement|Sliding Window Roller Replacement|Sliding Window Alignment|Sliding Window Lock Replacement|Sliding Door Repair|Sliding Door Wheel Replacement|Sliding Door Lock Replacement|uPVC Window Repair|uPVC Sliding Window Repair|uPVC Window Wheel Replacement|uPVC Window Roller Replacement|uPVC Window Alignment|uPVC Window Lock Replacement|uPVC Window Handle Replacement|uPVC Window Rubber Beading Replacement|uPVC Window Glass Replacement|uPVC Door Repair|uPVC Sliding Door Repair|uPVC Door Wheel Replacement|uPVC Door Lock Replacement|uPVC Door Handle Replacement|Broken Glass Replacement|Window Glass Replacement|Glass Repair|Mosquito Mesh Installation|Mosquito Mesh Repair|Mosquito Mesh Replacement|Velcro Mosquito Mesh|Magnetic Mosquito Mesh|Pleated Mosquito Mesh|Netlon Mosquito Mesh|Mosquito Mesh Door Installation|Mosquito Mesh Window Installation|Pigeon Net Installation|Balcony Bird Net Installation|Bird Net Replacement|Invisible Grill Installation|Cloth Dryer Installation|Cloth Dryer Repair|Other Kutbi Service'''.split('|')
+          AREAS={'bannerghatta-road':'Bannerghatta Road','gottigere':'Gottigere','arekere':'Arekere','hulimavu':'Hulimavu','jp-nagar':'JP Nagar','btm-layout':'BTM Layout','jayanagar':'Jayanagar','begur':'Begur','electronic-city':'Electronic City','hsr-layout':'HSR Layout','whitefield':'Whitefield','koramangala':'Koramangala','basavanagudi':'Basavanagudi','sarjapura':'Sarjapura','kudlu-gate':'Kudlu Gate','marathahalli':'Marathahalli','defence-colony-indiranagar':'Defence Colony Indiranagar','akshaya-nagar':'Akshaya Nagar','arekere-mico-layout-2nd-stage':'Arekere MICO Layout 2nd Stage','lakshmi-layout':'Lakshmi Layout','bengaluru':'Bengaluru'}
+
+          def slug(x): return re.sub(r'[^a-z0-9]+','-',str(x or '').lower()).strip('-')[:70] or 'photo'
+          def area_from_name(name):
+              parts=Path(name).stem[len('pending-'):].split('-') if Path(name).stem.startswith('pending-') else []
+              for n in range(min(8,len(parts)),0,-1):
+                  if '-'.join(parts[:n]) in AREAS: return AREAS['-'.join(parts[:n])]
+              return 'Bengaluru'
+          def output_text(data):
+              if isinstance(data.get('output_text'),str) and data['output_text'].strip(): return data['output_text'].strip()
+              out=[]
+              for item in data.get('output',[]):
+                  for c in item.get('content',[]) if isinstance(item,dict) else []:
+                      if c.get('type')=='output_text': out.append(str(c.get('text','')))
+              return '\n'.join(out).strip()
+          def analyze(path,area):
+              b64=base64.b64encode(path.read_bytes()).decode('ascii')
+              prompt='''Analyze this real Kutbi Aluminium Glass & Hardware project photo. Determine the service ONLY from what is visibly shown in the IMAGE. Do NOT use the filename to determine the service. Choose exactly one service from this approved list:\n'''+'\n'.join('- '+x for x in SERVICES)+'''\nRules: choose the most specific visible service; if uncertain use Other Kutbi Service. The supplied project area is '''+area+'''; use it in metadata but do not claim the image proves the location. Write a factual 1-2 sentence description of visible work. Do not invent names, brands, measurements, prices, materials or results. Create concise ALT text and 5-10 useful keywords. Return JSON only: {"service":"...","description":"...","alt":"...","keywords":["..."]}.'''
+              payload={'model':MODEL,'input':[{'role':'user','content':[{'type':'input_text','text':prompt},{'type':'input_image','image_url':'data:image/jpeg;base64,'+b64,'detail':'high'}]}],'max_output_tokens':700}
+              req=Request(API,data=json.dumps(payload).encode(),headers={'Authorization':'Bearer '+os.environ['OPENAI_API_KEY'],'Content-Type':'application/json'},method='POST')
+              try:
+                  with urlopen(req,timeout=120) as r: data=json.loads(r.read().decode())
+              except HTTPError as e: raise RuntimeError('OpenAI API error '+str(e.code)+': '+e.read().decode('utf-8','replace')[:400])
+              text=re.sub(r'^```(?:json)?\s*|\s*```$','',output_text(data),flags=re.I|re.S).strip(); result=json.loads(text)
+              service=result.get('service','Other Kutbi Service'); service=service if service in SERVICES else 'Other Kutbi Service'
+              description=str(result.get('description') or '').strip() or f'{service} completed in {area}, Bengaluru by Kutbi Aluminium Glass & Hardware.'
+              alt=str(result.get('alt') or '').strip() or f'{service} in {area}, Bengaluru - Kutbi Aluminium Glass & Hardware'
+              kws=result.get('keywords') if isinstance(result.get('keywords'),list) else []
+              keywords=list(dict.fromkeys([service,area,'Bengaluru']+[str(x).strip() for x in kws if str(x).strip()][:10]+['Kutbi Aluminium Glass & Hardware']))
+              return service,description,alt,keywords
+
+          files=sorted([p for p in INCOMING.glob('*.jpg') if p.is_file()])
+          if not files: print('No incoming photos found.'); raise SystemExit(0)
+          try: items=json.loads(MANIFEST.read_text(encoding='utf-8'))
+          except Exception: items=[]
+          if not isinstance(items,list): items=[]
+          stamp=int(time.time()*1000); processed=[]; failed=[]
+          for idx,path in enumerate(files,1):
+              area=area_from_name(path.name); print(f'[{idx}/{len(files)}] AI analyzing {path.name} | {area}')
+              try:
+                  service,description,alt,keywords=analyze(path,area)
+                  filename=f'{slug(service)}-{slug(area)}-bengaluru-{stamp}-{idx:03d}.jpg'; target=PHOTO_DIR/filename; c=1
+                  while target.exists(): filename=f'{slug(service)}-{slug(area)}-bengaluru-{stamp}-{idx:03d}-{c}.jpg'; target=PHOTO_DIR/filename; c+=1
+                  path.rename(target)
+                  processed.append({'id':str(stamp+idx),'path':str(target).replace('\\','/'),'type':'photo','service':service,'area':area if area.endswith(', Bengaluru') else area+', Bengaluru','date':time.strftime('%Y-%m-%d'),'sizeMB':f'{target.stat().st_size/1048576:.2f}','originalName':path.name,'seoFileName':filename,'description':description,'alt':alt,'keywords':keywords,'metadataSource':'AI image analysis'})
+                  print('  ->',service,'->',filename)
+              except Exception as e: failed.append((path.name,str(e))); print('  FAILED:',e)
+          if processed: MANIFEST.write_text(json.dumps(processed+items,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          if failed:
+              print('Photos left in incoming/ for retry:'); [print(' -',n,':',e) for n,e in failed]
+              if not processed: raise SystemExit('No photos processed successfully.')
+          PY
+
+      - name: Commit analyzed photos so GitHub Pages can publish them
+        env:
+          KUTBI_GITHUB_TOKEN: ${{ secrets.KUTBI_GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name 'Kutbi AI Photo Gallery'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add images/photos
+          if git diff --cached --quiet; then echo 'No changes to commit.'; exit 0; fi
+          git commit -m 'AI classify and optimize Kutbi gallery photos'
+          git remote set-url origin "https://x-access-token:${KUTBI_GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort || true; sleep $((attempt*2)); continue; }
+            if git push origin HEAD:main; then echo "AI photo gallery published on attempt $attempt."; exit 0; fi
+            sleep $((attempt*2))
+          done
+          echo 'Could not publish AI photo gallery changes.'
+          exit 1
