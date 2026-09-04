@@ -29,3 +29,7 @@ header::after{content:none!important;display:none!important;background:none!impo
 
 /* Never allow hero CTAs to become fixed on mobile */
 @media(max-width:620px){.hero-actions .btn:first-child,.hero-actions .whatsapp,.hero-card .btn.full{position:static!important;left:auto!important;right:auto!important;bottom:auto!important;width:100%!important}}
+
+/* Kutbi mobile quick contact bar */
+.mobile-quick-bar{display:none}
+@media(max-width:620px){body{padding-bottom:74px}.mobile-quick-bar{position:fixed;left:10px;right:10px;bottom:10px;z-index:9999;display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;padding:7px;background:rgba(6,24,63,.96);border:1px solid rgba(255,255,255,.16);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.28);backdrop-filter:blur(8px)}.mobile-quick-bar a{min-height:52px;display:flex;align-items:center;justify-content:center;gap:5px;border-radius:11px;color:#fff;font-size:14px;font-weight:800;text-decoration:none;line-height:1.1;text-align:center}.mobile-quick-bar a:nth-child(1){background:#f28c00}.mobile-quick-bar a:nth-child(2){background:#168b57}.mobile-quick-bar a:nth-child(3){background:#0b5cab}.mobile-quick-bar a:active{transform:translateY(1px)}}
