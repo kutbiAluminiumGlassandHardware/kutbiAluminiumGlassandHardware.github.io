@@ -1,23 +1,93 @@
 name: Mobile quick contact bar
+
 on:
   push:
     branches: [main]
+
 permissions:
   contents: write
+
 jobs:
   update:
     if: ${{ !contains(github.event.head_commit.message, 'mobile quick bar') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: |
-          python3 - <<'PY'
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update mobile quick bar safely
+        shell: python
+        run: |
           from pathlib import Path
-          p=Path('styles.css');s=p.read_text();m='/* mobile quick bar */'
-          if m not in s:
-            s += '\n'+m+'\n@media(max-width:620px){body{padding-bottom:76px}.hero-actions .btn:first-child{position:fixed;z-index:9999;left:10px;bottom:10px;width:calc((100vw - 32px)/3);min-height:54px;margin:0;display:flex;align-items:center;justify-content:center;font-size:14px}.hero-actions .whatsapp{position:fixed;z-index:9999;left:calc(10px + (100vw - 32px)/3 + 6px);bottom:10px;width:calc((100vw - 32px)/3);min-height:54px;margin:0;display:flex;align-items:center;justify-content:center;font-size:14px}.hero-card .btn.full{position:fixed;z-index:9999;right:10px;bottom:10px;width:calc((100vw - 32px)/3);min-height:54px;margin:0;display:flex;align-items:center;justify-content:center;font-size:14px;background:#0b5cab}}'
-            p.write_text(s)
-          PY
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add styles.css && git commit -m 'mobile quick bar' && git push
+
+          p = Path('styles.css')
+          s = p.read_text(encoding='utf-8')
+
+          marker = '/* mobile quick bar */'
+          block = '''
+          /* mobile quick bar */
+          @media(max-width:620px){
+            body{padding-bottom:76px}
+            .mobile-quick-bar{
+              position:fixed;
+              left:10px;
+              right:10px;
+              bottom:10px;
+              z-index:9999;
+              display:grid;
+              grid-template-columns:1fr 1fr 1fr;
+              gap:7px;
+              padding:7px;
+              background:rgba(6,24,63,.96);
+              border:1px solid rgba(255,255,255,.16);
+              border-radius:16px;
+              box-shadow:0 10px 30px rgba(0,0,0,.28);
+              backdrop-filter:blur(8px)
+            }
+            .mobile-quick-bar a{
+              min-height:52px;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+              gap:5px;
+              border-radius:11px;
+              color:#fff;
+              font-size:14px;
+              font-weight:800;
+              text-decoration:none;
+              line-height:1.1;
+              text-align:center
+            }
+            .mobile-quick-bar a:nth-child(1){background:#f28c00}
+            .mobile-quick-bar a:nth-child(2){background:#168b57}
+            .mobile-quick-bar a:nth-child(3){background:#0b5cab}
+            .mobile-quick-bar a:active{transform:translateY(1px)}
+          }
+          '''
+
+          if marker not in s:
+              s += block
+
+          p.write_text(s, encoding='utf-8')
+
+          # Remove the old duplicate fixed-button rules if they exist.
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = 'position:fixed;z-index:9999;left:10px;bottom:10px;width:calc((100vw - 32px)/3)'
+          if old in s:
+              import re
+              s = re.sub(r'@media\(max-width:620px\)\{\.hero-actions \.btn:first-child\{position:fixed.*?background:#0b5cab\}\}', '', s)
+              p.write_text(s, encoding='utf-8')
+
+      - name: Commit only when files changed
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html styles.css
+          if git diff --cached --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git commit -m "Fix mobile quick contact bar"
+          git push
