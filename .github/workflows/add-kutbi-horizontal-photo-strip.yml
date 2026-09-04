@@ -1,8 +1,9 @@
 name: Add Kutbi horizontal photo strip
 on:
-  push:
+  pull_request:
     paths:
       - '.github/workflows/add-kutbi-horizontal-photo-strip.yml'
+      - 'images/projects/**'
   workflow_dispatch:
 permissions:
   contents: write
@@ -44,17 +45,9 @@ jobs:
 
           text = index.read_text(encoding='utf-8')
           text = re.sub(r'<section class="kutbi-photo-strip"[\s\S]*?</section>', '', text, count=1)
-
           if 'href="header-photo-slider.css"' not in text:
-              head_marker = '</head>'
-              if head_marker not in text:
-                  raise SystemExit('Could not find </head> in index.html')
-              text = text.replace(head_marker, '<link rel="stylesheet" href="header-photo-slider.css">' + head_marker, 1)
-
-          marker = '</header>'
-          if marker not in text:
-              raise SystemExit('Could not find </header> in index.html')
-          text = text.replace(marker, marker + strip_html, 1)
+              text = text.replace('</head>', '<link rel="stylesheet" href="header-photo-slider.css"></head>', 1)
+          text = text.replace('</header>', '</header>' + strip_html, 1)
           index.write_text(text, encoding='utf-8')
 
           css.write_text('''/* Kutbi horizontal work-photo strip */
