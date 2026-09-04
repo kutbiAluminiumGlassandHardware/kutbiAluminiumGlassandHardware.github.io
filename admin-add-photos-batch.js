@@ -16,15 +16,22 @@
   areaSelect.size=Math.min(8, Math.max(4, areaSelect.options.length));
   areaSelect.setAttribute('aria-label','Select one or more project areas');
 
-  // Update the existing page copy so it accurately describes the new AI behavior.
+  // The service is now determined by the actual image, not the filename.
   const serviceSelect=document.getElementById('photoService');
-  if(serviceSelect?.options?.length) serviceSelect.options[0].textContent='AI auto-detect service from image';
+  if(serviceSelect?.options?.length){
+    serviceSelect.options[0].textContent='AI auto-detect service from image';
+    serviceSelect.value='';
+    serviceSelect.disabled=true;
+  }
   const serviceHint=serviceSelect?.parentElement?.querySelector('.hint');
-  if(serviceHint) serviceHint.textContent='Leave blank to let AI identify the service from the actual photo. The filename is not used to choose the service.';
+  if(serviceHint) serviceHint.textContent='AI analyzes the actual photo and selects the most specific Kutbi service. Filename is never used to choose the service.';
   const description=document.getElementById('photoDescription');
   const descriptionLabel=description?.previousElementSibling;
-  if(descriptionLabel) descriptionLabel.textContent='Extra Photo Context (optional)';
-  if(description) description.placeholder='Optional extra context. AI will still analyze the actual image to identify the service and write the final description.';
+  if(descriptionLabel) descriptionLabel.textContent='Photo Description (AI generated)';
+  if(description){
+    description.disabled=true;
+    description.placeholder='AI will write a factual description from the actual image.';
+  }
 
   function selectedAreas(){
     return Array.from(areaSelect.selectedOptions||[])
@@ -90,7 +97,7 @@
         await uploadPending(ready[i],files[i],i,ready.length,token,areaAssignments[i],stamp);
       }
       const areaSummary=areas.length?'\nSelected areas: '+areas.join(', '):'\nNo area selected: Bengaluru will be used.';
-      show('✓ '+ready.length+' photos uploaded to the AI analysis queue.\n✓ The service will be detected from each actual image — NOT from the filename.\n✓ AI will create the photo description, ALT text, keywords and SEO filename.\n✓ Existing gallery photos were not deleted.'+areaSummary+'\n\nThe GitHub AI workflow will now process the queued photos automatically.');
+      show('✓ '+ready.length+' photos uploaded to the AI analysis queue.\n✓ Service will be detected from each actual image — NOT from the filename.\n✓ AI will create the factual photo description, ALT text, keywords and SEO filename.\n✓ Existing gallery photos were not deleted.'+areaSummary+'\n\nThe GitHub AI workflow will now process the queued photos automatically.');
       $('photoFiles').value='';
     }catch(error){
       show('Upload failed.\n'+(error.message||error)+'\n\nNo existing gallery photos were deleted.',false);
@@ -99,7 +106,6 @@
     }
   }
 
-  // Replace the original button so the old filename-based uploader cannot run.
   const replacement=uploadButton.cloneNode(true);
   uploadButton.replaceWith(replacement);
   replacement.addEventListener('click',aiQueueUpload);
