@@ -1,0 +1,48 @@
+name: Add mobile quick contact bar
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  add-mobile-bar:
+    if: ${{ !contains(github.event.head_commit.message, 'Add mobile quick contact bar') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add mobile quick contact bar
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          marker = '<div class="mobile-quick-bar" aria-label="Quick contact">'
+          if marker not in s:
+              bar = '''<div class="mobile-quick-bar" aria-label="Quick contact"><a href="tel:+919979204616" aria-label="Call Kutbi">📞 <span>Call</span></a><a href="https://wa.me/919979204616?text=Hello%20Kutbi%2C%20I%20need%20a%20window%20or%20door%20service" aria-label="WhatsApp Kutbi">💬 <span>WhatsApp</span></a><a href="https://wa.me/919979204616?text=Hello%20Kutbi%2C%20I%20am%20sharing%20a%20photo%20for%20repair%20requirement" aria-label="Send photo to Kutbi">📸 <span>Send Photo</span></a></div>'''
+              s = s.replace('</body>', bar + '</body>')
+              p.write_text(s, encoding='utf-8')
+
+          css = Path('styles.css')
+          c = css.read_text(encoding='utf-8')
+          css_marker = '/* Kutbi mobile quick contact bar */'
+          if css_marker not in c:
+              c += '''\n/* Kutbi mobile quick contact bar */\n.mobile-quick-bar{display:none}\n@media(max-width:620px){body{padding-bottom:74px}.mobile-quick-bar{position:fixed;left:10px;right:10px;bottom:10px;z-index:9999;display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;padding:7px;background:rgba(6,24,63,.96);border:1px solid rgba(255,255,255,.16);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.28);backdrop-filter:blur(8px)}.mobile-quick-bar a{min-height:52px;display:flex;align-items:center;justify-content:center;gap:5px;border-radius:11px;color:#fff;font-size:14px;font-weight:800;text-decoration:none;line-height:1.1;text-align:center}.mobile-quick-bar a:nth-child(1){background:#f28c00}.mobile-quick-bar a:nth-child(2){background:#168b57}.mobile-quick-bar a:nth-child(3){background:#0b5cab}.mobile-quick-bar a:active{transform:translateY(1px)}}\n'''
+              css.write_text(c, encoding='utf-8')
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html styles.css
+          if git diff --cached --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git commit -m "Add mobile quick contact bar"
+          git push
