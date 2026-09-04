@@ -49,3 +49,5 @@ jobs:
           git add index.html
           git commit -m 'Add real Before After repair results to homepage'
           git push
+
+      # Triggered intentionally after the workflow file is present on main.
