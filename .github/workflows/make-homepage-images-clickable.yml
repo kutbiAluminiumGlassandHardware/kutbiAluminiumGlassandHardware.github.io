@@ -1,3 +1,4 @@
+# One-time homepage image click enhancement
 name: Make homepage project images clickable
 
 on:
@@ -32,22 +33,14 @@ jobs:
     document.querySelectorAll('.visual-card').forEach(function(card){
       var link=card.querySelector('a[href*="project.html?id="]');
       var img=card.querySelector('img');
-      if(link&&img&&!img.dataset.projectLinked){
-        img.dataset.projectLinked='1';
-        img.style.cursor='pointer';
-        img.title='Open Project Details';
-        img.addEventListener('click',function(){window.location.href=link.href;});
-      }
+      if(link&&img&&!img.dataset.projectLinked){img.dataset.projectLinked='1';img.style.cursor='pointer';img.title='Open Project Details';img.addEventListener('click',function(){window.location.href=link.href;});}
     });
     document.querySelectorAll('.home-project').forEach(function(card){
       var link=card.querySelector('a[href*="project.html?id="]');
       if(!link)return;
       card.querySelectorAll('.home-project-photos img').forEach(function(img){
         if(img.dataset.projectLinked)return;
-        img.dataset.projectLinked='1';
-        img.style.cursor='pointer';
-        img.title='Open Project Details';
-        img.addEventListener('click',function(){window.location.href=link.href;});
+        img.dataset.projectLinked='1';img.style.cursor='pointer';img.title='Open Project Details';img.addEventListener('click',function(){window.location.href=link.href;});
       });
     });
     document.querySelectorAll('.before-after-card').forEach(function(card){
@@ -55,20 +48,10 @@ jobs:
       if(!id)return;
       card.querySelectorAll('img').forEach(function(img){
         if(img.dataset.projectLinked)return;
-        img.dataset.projectLinked='1';
-        img.style.cursor='pointer';
-        img.title='Open Project Details';
-        img.addEventListener('click',function(){window.location.href='project.html?id='+encodeURIComponent(id);});
+        img.dataset.projectLinked='1';img.style.cursor='pointer';img.title='Open Project Details';img.addEventListener('click',function(){window.location.href='project.html?id='+encodeURIComponent(id);});
       });
     });
-    document.querySelectorAll('.homepage-photo-slide').forEach(function(slide){
-      var img=slide.querySelector('img');
-      if(!img)return;
-      img.style.cursor='pointer';
-      img.title='Open Project Details';
-    });
   }
-  var originalBeforeAfter=window.loadBeforeAfter;
   var observer=new MutationObserver(wire);
   observer.observe(document.body,{childList:true,subtree:true});
   wire();
@@ -78,13 +61,11 @@ jobs:
 
           old = "const card=document.createElement('article');card.className='before-after-card';card.innerHTML="
           new = "const card=document.createElement('article');card.className='before-after-card';card.dataset.projectId=p.id;card.innerHTML="
-          if old in html:
-              html = html.replace(old, new, 1)
+          if old in html: html = html.replace(old, new, 1)
 
           old = "a.href='photo-gallery.html';a.setAttribute('aria-label','View photo gallery');"
           new = "a.href=x.projectId?('project.html?id='+encodeURIComponent(x.projectId)):'photo-gallery.html';a.setAttribute('aria-label',x.projectId?'View project details':'View photo gallery');"
-          if old in html:
-              html = html.replace(old, new, 1)
+          if old in html: html = html.replace(old, new, 1)
 
           path.write_text(html, encoding='utf-8')
 
