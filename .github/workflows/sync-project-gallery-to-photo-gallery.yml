@@ -1,0 +1,121 @@
+name: Sync Project Gallery to Photo Gallery
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'images/projects/projects.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-gallery:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync project photos into Photo Gallery
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import json
+
+          root = Path('.')
+          projects_file = root / 'images' / 'projects' / 'projects.json'
+          photos_file = root / 'images' / 'photos' / 'photos.json'
+
+          if not projects_file.exists():
+              raise SystemExit('Project metadata file not found.')
+
+          projects = json.loads(projects_file.read_text(encoding='utf-8'))
+          if not isinstance(projects, list):
+              raise SystemExit('projects.json must contain a JSON array.')
+
+          if photos_file.exists():
+              photos = json.loads(photos_file.read_text(encoding='utf-8'))
+          else:
+              photos = []
+          if not isinstance(photos, list):
+              raise SystemExit('photos.json must contain a JSON array.')
+
+          existing = {str(item.get('path', '')).strip() for item in photos if isinstance(item, dict)}
+          added = []
+
+          for project in projects:
+              if not isinstance(project, dict):
+                  continue
+              project_id = str(project.get('id', '')).strip()
+              service = str(project.get('service', 'Kutbi Work')).strip() or 'Kutbi Work'
+              area = str(project.get('area', 'Bengaluru')).strip() or 'Bengaluru'
+              date = str(project.get('date', '')).strip()
+              title = str(project.get('seoTitle') or project.get('title') or 'Kutbi Completed Project').strip()
+              description = str(project.get('seoDescription') or project.get('description') or '').strip()
+              project_keywords = project.get('keywords') if isinstance(project.get('keywords'), list) else []
+
+              for image_index, image in enumerate(project.get('images') or [], start=1):
+                  if not isinstance(image, dict):
+                      continue
+                  path = str(image.get('path', '')).strip()
+                  if not path or not path.startswith('images/projects/'):
+                      continue
+                  if path in existing:
+                      continue
+
+                  image_type = str(image.get('type', 'work')).strip() or 'work'
+                  alt = str(image.get('alt', '')).strip()
+                  if not alt:
+                      label = 'before' if image_type.lower() == 'before' else ('after' if image_type.lower() == 'after' else 'completed work')
+                      alt = f'{service} in {area} - {label} photo by Kutbi Aluminium Glass & Hardware'
+
+                  keywords = image.get('keywords') if isinstance(image.get('keywords'), list) else []
+                  merged_keywords = []
+                  for keyword in list(keywords) + list(project_keywords) + [service, area, 'Bengaluru', 'Kutbi Aluminium Glass & Hardware']:
+                      keyword = str(keyword).strip()
+                      if keyword and keyword not in merged_keywords:
+                          merged_keywords.append(keyword)
+
+                  item = {
+                      'id': f'project-{project_id}-{image_index}' if project_id else f'project-photo-{len(photos) + len(added) + 1}',
+                      'path': path,
+                      'type': 'photo',
+                      'projectType': image_type,
+                      'service': service,
+                      'area': area,
+                      'date': date,
+                      'sizeMB': str(image.get('sizeMB', '')),
+                      'originalName': str(image.get('originalName', Path(path).name)),
+                      'seoFileName': Path(path).name,
+                      'description': description,
+                      'alt': alt,
+                      'keywords': merged_keywords,
+                      'projectId': project_id,
+                      'projectTitle': title,
+                      'source': 'project-gallery'
+                  }
+                  photos.append(item)
+                  existing.add(path)
+                  added.append(path)
+
+          photos_file.parent.mkdir(parents=True, exist_ok=True)
+          photos_file.write_text(json.dumps(photos, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          print(f'Added {len(added)} project photos to Photo Gallery metadata.')
+          PY
+
+      - name: Commit synchronized Photo Gallery metadata
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add images/photos/photos.json
+          if git diff --cached --quiet; then
+            echo 'Photo Gallery is already synchronized.'
+            exit 0
+          fi
+          git commit -m 'Sync Project Gallery photos to Photo Gallery'
+          git push
