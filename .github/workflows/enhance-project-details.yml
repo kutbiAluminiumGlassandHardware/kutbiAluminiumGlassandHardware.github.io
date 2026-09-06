@@ -1,0 +1,75 @@
+name: Enhance project details page
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  enhance:
+    if: ${{ !contains(github.event.head_commit.message, 'Enhance project details page') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enhance project details safely
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('project.html')
+          s = p.read_text(encoding='utf-8')
+
+          style_marker = '.project-action-bar{'
+          style = '''<style>
+          .project-action-bar{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 8px}
+          .project-action-bar a{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:11px 18px;border-radius:10px;text-decoration:none;font-weight:800}
+          .project-action-bar .call{background:#f28c00;color:#fff}
+          .project-action-bar .wa{background:#168b57;color:#fff}
+          .project-action-bar .reviews{background:#fff;border:1px solid #dfe5ed;color:#06183f}
+          .project-location{margin:18px 0;padding:16px 18px;background:#f4f7fb;border-radius:14px;font-weight:700;color:#59636e}
+          .photo-card{cursor:pointer;transition:transform .2s ease,box-shadow .2s ease}.photo-card:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(6,24,63,.14)}
+          .photo-card img{cursor:zoom-in}
+          @media(max-width:620px){.project-action-bar{display:grid;grid-template-columns:1fr}.project-action-bar a{width:100%}}
+          </style>'''
+          if style_marker not in s:
+              s = s.replace('</head>', style + '</head>', 1)
+
+          old = '<p class="lead" id="intro"></p></div></section>'
+          new = '''<p class="lead" id="intro"></p>
+          <div class="project-action-bar">
+            <a class="call" href="tel:+919979204616">📞 Call Kutbi</a>
+            <a class="wa" href="https://wa.me/919979204616?text=Hello%20Kutbi%2C%20I%20need%20similar%20work">💬 WhatsApp</a>
+            <a class="reviews" href="https://www.google.com/search?q=Kutbi+Aluminium+Glass+Hardware+Bangalore&amp;ludocid=10154872758820126751" target="_blank" rel="noopener">⭐ See Google Reviews</a>
+          </div>
+          <div class="project-location" id="location">📍 Service area: Bengaluru</div>
+          </div></section>'''
+          if old in s and 'id="location"' not in s:
+              s = s.replace(old, new, 1)
+
+          old_photo = "img.onclick=()=>window.open(img.src,'_blank');"
+          new_photo = "img.title='Tap to view full-size photo';img.onclick=()=>window.open(img.src,'_blank');"
+          if old_photo in s:
+              s = s.replace(old_photo, new_photo, 1)
+
+          old_area = "document.getElementById('area').textContent=p.area||'Bangalore';"
+          new_area = old_area + "document.getElementById('location').textContent='📍 Project Area: '+(p.area||'Bengaluru')+' • Serving nearby Bengaluru areas';"
+          if old_area in s and "getElementById('location')" not in s:
+              s = s.replace(old_area, new_area, 1)
+
+          p.write_text(s, encoding='utf-8')
+
+      - name: Commit only when changed
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add project.html
+          if git diff --cached --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git commit -m "Enhance project details page"
+          git push
