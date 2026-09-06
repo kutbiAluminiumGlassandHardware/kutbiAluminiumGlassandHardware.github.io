@@ -15,14 +15,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Update mobile quick bar safely
+      - name: Update mobile quick bar and homepage project image links safely
         shell: python
         run: |
           from pathlib import Path
+          import re
 
+          # Keep the existing mobile quick-contact bar behavior.
           p = Path('styles.css')
           s = p.read_text(encoding='utf-8')
-
           marker = '/* mobile quick bar */'
           block = '''
           /* mobile quick bar */
@@ -64,27 +65,75 @@ jobs:
             .mobile-quick-bar a:active{transform:translateY(1px)}
           }
           '''
-
           if marker not in s:
               s += block
-
           p.write_text(s, encoding='utf-8')
 
-          # Remove the old duplicate fixed-button rules if they exist.
+          # Remove old duplicate fixed-button rules if present.
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
           old = 'position:fixed;z-index:9999;left:10px;bottom:10px;width:calc((100vw - 32px)/3)'
           if old in s:
-              import re
-              s = re.sub(r'@media\(max-width:620px\)\{\.hero-actions \.btn:first-child\{position:fixed.*?background:#0b5cab\}\}', '', s)
-              p.write_text(s, encoding='utf-8')
+              s = re.sub(r'@media\\(max-width:620px\\)\\{\\.hero-actions \\.btn:first-child\\{position:fixed.*?background:#0b5cab\\}\\}', '', s)
+
+          # Make every project-linked homepage image open Project Details.
+          marker2 = 'KUTBI_HOME_PROJECT_IMAGE_LINKS_V1'
+          if marker2 not in s:
+              script = '''<script id="KUTBI_HOME_PROJECT_IMAGE_LINKS_V1">
+          (function(){
+            function wire(){
+              document.querySelectorAll('.visual-card').forEach(function(card){
+                var link=card.querySelector('a[href*="project.html?id="]');
+                var img=card.querySelector('img');
+                if(link&&img&&!img.dataset.projectLinked){img.dataset.projectLinked='1';img.style.cursor='pointer';img.title='Open Project Details';img.addEventListener('click',function(){window.location.href=link.href;});}
+              });
+              document.querySelectorAll('.home-project').forEach(function(card){
+                var link=card.querySelector('a[href*="project.html?id="]');
+                if(!link)return;
+                card.querySelectorAll('.home-project-photos img').forEach(function(img){
+                  if(img.dataset.projectLinked)return;
+                  img.dataset.projectLinked='1';img.style.cursor='pointer';img.title='Open Project Details';img.addEventListener('click',function(){window.location.href=link.href;});
+                });
+              });
+              document.querySelectorAll('.before-after-card').forEach(function(card){
+                var id=card.dataset.projectId;
+                if(!id)return;
+                card.querySelectorAll('img').forEach(function(img){
+                  if(img.dataset.projectLinked)return;
+                  img.dataset.projectLinked='1';img.style.cursor='pointer';img.title='Open Project Details';img.addEventListener('click',function(){window.location.href='project.html?id='+encodeURIComponent(id);});
+                });
+              });
+            }
+            var observer=new MutationObserver(wire);
+            observer.observe(document.body,{childList:true,subtree:true});
+            wire();
+          })();
+          </script>'''
+              s = s.replace('</body></html>', script + '</body></html>')
+
+          # Give Before/After cards their project ID.
+          old = "const card=document.createElement('article');card.className='before-after-card';card.innerHTML="
+          new = "const card=document.createElement('article');card.className='before-after-card';card.dataset.projectId=p.id;card.innerHTML="
+          if old in s:
+              s = s.replace(old, new, 1)
+
+          # In the homepage slideshow, go directly to Project Details when the photo metadata has projectId.
+          old = "a.href='photo-gallery.html';a.setAttribute('aria-label','View photo gallery');"
+          new = "a.href=x.projectId?('project.html?id='+encodeURIComponent(x.projectId)):'photo-gallery.html';a.setAttribute('aria-label',x.projectId?'View project details':'View photo gallery');"
+          if old in s:
+              s = s.replace(old, new, 1)
+
+          p.write_text(s, encoding='utf-8')
+
+          # Remove the temporary one-time workflow after this enhancement is installed.
+          Path('.github/workflows/make-homepage-images-clickable.yml').unlink(missing_ok=True)
 
       - name: Commit only when files changed
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html styles.css
+          git add index.html styles.css .github/workflows/make-homepage-images-clickable.yml
           if git diff --cached --quiet; then
             echo "No changes needed"
             exit 0
