@@ -1,0 +1,65 @@
+name: Strengthen priority service page SEO
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'upvc-sliding-window-repair-bangalore.html'
+      - 'upvc-door-repair-bangalore.html'
+      - 'mosquito-mesh-bangalore.html'
+      - 'aluminium-windows-bangalore.html'
+      - '.github/workflows/seo-priority-pages.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  seo-pages:
+    if: ${{ !contains(github.event.head_commit.message, 'Strengthen priority service page SEO') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Add priority SEO content
+        shell: python
+        run: |
+          from pathlib import Path
+
+          additions = {
+              'upvc-sliding-window-repair-bangalore.html': '''<section class="band" id="priority-local-repair"><div class="wrap"><div class="eyebrow">Priority Bengaluru repair service</div><h2>uPVC Sliding Window Repair Near You in Bangalore</h2><p>Kutbi Aluminium Glass &amp; Hardware provides on-site uPVC sliding window repair in Bengaluru for stuck, jammed, noisy and difficult-to-slide windows. We handle suitable wheel and roller replacement, track servicing, alignment, handles, locks and closing problems after inspecting the existing window.</p><p>For local service, Kutbi covers Gottigere, Bannerghatta Road, Kalena Agrahara, Arekere, Hulimavu, JP Nagar, BTM Layout, Begur, Electronic City, HSR Layout, Whitefield, Koramangala, Sarjapur and other selected Bengaluru areas.</p><p><a class="btn" href="upvc-door-repair-bangalore.html">uPVC Sliding Door Repair →</a> <a class="btn alt" href="mosquito-mesh-bangalore.html">Mosquito Mesh Repair →</a></p></div></section>''',
+              'upvc-door-repair-bangalore.html': '''<section class="band" id="priority-local-repair"><div class="wrap"><div class="eyebrow">Priority Bengaluru repair service</div><h2>uPVC Sliding Door Repair Near You in Bangalore</h2><p>Kutbi Aluminium Glass &amp; Hardware provides on-site uPVC sliding door repair in Bengaluru for stuck, jammed, noisy and difficult-to-slide doors. We handle suitable wheel and roller replacement, track servicing, alignment, locks, handles and closing problems after inspecting the existing door.</p><p>Local service coverage includes Gottigere, Bannerghatta Road, Kalena Agrahara, Arekere, Hulimavu, JP Nagar, BTM Layout, Begur, Electronic City, HSR Layout, Whitefield, Koramangala, Sarjapur and other selected Bengaluru areas.</p><p><a class="btn" href="upvc-sliding-window-repair-bangalore.html">uPVC Sliding Window Repair →</a> <a class="btn alt" href="mosquito-mesh-bangalore.html">Mosquito Mesh Repair →</a></p></div></section>''',
+              'mosquito-mesh-bangalore.html': '''<section class="band" id="priority-local-repair"><div class="wrap"><div class="eyebrow">Priority Bengaluru repair service</div><h2>Mosquito Mesh Repair &amp; Replacement Near You in Bangalore</h2><p>Kutbi Aluminium Glass &amp; Hardware provides mosquito mesh repair, mosquito net replacement and installation for suitable aluminium and uPVC windows and doors across Bengaluru. We handle torn, loose, worn and damaged mesh, including suitable Velcro, magnetic and pleated systems.</p><p>Service areas include Gottigere, Bannerghatta Road, Kalena Agrahara, Arekere, Hulimavu, JP Nagar, BTM Layout, Begur, Electronic City, HSR Layout, Whitefield, Koramangala, Sarjapur and other selected Bengaluru areas.</p><p><a class="btn" href="upvc-sliding-window-repair-bangalore.html">uPVC Sliding Window Repair →</a> <a class="btn alt" href="upvc-door-repair-bangalore.html">uPVC Sliding Door Repair →</a></p></div></section>''',
+              'aluminium-windows-bangalore.html': '''<section class="band" id="priority-local-repair"><div class="wrap"><div class="eyebrow">Priority Bengaluru repair service</div><h2>Aluminium Sliding Window Repair in Bangalore</h2><p>Kutbi Aluminium Glass &amp; Hardware provides repair-first service for aluminium sliding windows in Bengaluru, including stuck-window repair, wheel and roller replacement, track servicing, alignment, handles, locks and rubber beading.</p><p>For local service, Kutbi covers Gottigere, Bannerghatta Road, Kalena Agrahara, Arekere, Hulimavu, JP Nagar, BTM Layout, Begur, Electronic City, HSR Layout, Whitefield, Koramangala, Sarjapur and other selected Bengaluru areas.</p><p><a class="btn" href="sliding-window-repair-bangalore.html">Aluminium Sliding Window Repair →</a> <a class="btn alt" href="upvc-sliding-window-repair-bangalore.html">uPVC Sliding Window Repair →</a></p></div></section>'''
+          }
+
+          for filename, section in additions.items():
+              p = Path(filename)
+              s = p.read_text(encoding='utf-8')
+              if 'id="priority-local-repair"' not in s:
+                  s = s.replace('</main>', section + '</main>', 1)
+                  p.write_text(s, encoding='utf-8')
+
+      - name: Commit and push safely
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add upvc-sliding-window-repair-bangalore.html upvc-door-repair-bangalore.html mosquito-mesh-bangalore.html aluminium-windows-bangalore.html
+          if git diff --cached --quiet; then
+            echo "No SEO changes needed"
+            exit 0
+          fi
+          git commit -m "Strengthen priority service page SEO"
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort; git reset --hard origin/main; git pull --rebase origin main; }
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Push failed after 3 attempts"
+          exit 1
