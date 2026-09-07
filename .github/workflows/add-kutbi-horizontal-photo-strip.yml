@@ -24,6 +24,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: main
 
       - name: Build horizontal photo strip
         shell: bash
@@ -41,7 +42,6 @@ jobs:
 
           if not index.exists():
               raise SystemExit('index.html not found')
-
           if not project_dir.exists():
               print('Project photo directory not found; nothing to add.')
               raise SystemExit(0)
@@ -49,8 +49,7 @@ jobs:
           extensions = {'.jpg', '.jpeg', '.png', '.webp'}
           files = sorted(
               [p for p in project_dir.iterdir() if p.is_file() and p.suffix.lower() in extensions],
-              key=lambda p: p.name.lower(),
-              reverse=True,
+              key=lambda p: p.name.lower(), reverse=True,
           )[:10]
 
           if not files:
@@ -72,25 +71,15 @@ jobs:
           strip = (
               '<section class="kutbi-photo-strip" aria-label="Kutbi recent work photos">'
               '<div class="kutbi-photo-strip-viewport">'
-              '<div class="kutbi-photo-strip-track">'
-              + imgs + imgs +
+              '<div class="kutbi-photo-strip-track">' + imgs + imgs +
               '</div></div></section>'
           )
 
           text = index.read_text(encoding='utf-8')
-          text = re.sub(
-              r'<section class="kutbi-photo-strip"[\s\S]*?</section>',
-              '',
-              text,
-              count=1,
-          )
+          text = re.sub(r'<section class="kutbi-photo-strip"[\s\S]*?</section>', '', text, count=1)
 
           if 'href="header-photo-slider.css"' not in text:
-              text = text.replace(
-                  '</head>',
-                  '<link rel="stylesheet" href="header-photo-slider.css"></head>',
-                  1,
-              )
+              text = text.replace('</head>', '<link rel="stylesheet" href="header-photo-slider.css"></head>', 1)
 
           if '</header>' in text:
               text = text.replace('</header>', '</header>' + strip, 1)
@@ -98,22 +87,44 @@ jobs:
               print('Warning: </header> not found; photo strip was not inserted.')
 
           index.write_text(text, encoding='utf-8')
-
           css.write_text('''/* Kutbi compact horizontal work-photo strip */
 .kutbi-photo-strip{width:100%;overflow:hidden;background:#fff;padding:8px 0;border-bottom:1px solid #e8edf3;position:relative;z-index:2}.kutbi-photo-strip-viewport{width:100%;overflow:hidden}.kutbi-photo-strip-track{display:flex;width:max-content;gap:8px;will-change:transform;animation:kutbiPhotoStripMove 34s linear infinite}.kutbi-photo-strip-track img{display:block;width:104px;height:58px;flex:0 0 104px;object-fit:cover;border-radius:8px;border:1px solid #e1e6ed;box-shadow:0 3px 10px rgba(6,24,63,.14)}.kutbi-photo-strip:hover .kutbi-photo-strip-track{animation-play-state:paused}@keyframes kutbiPhotoStripMove{from{transform:translateX(calc(-50% - 4px))}to{transform:translateX(0)}}@media(max-width:1100px){.kutbi-photo-strip-track img{width:88px;height:52px;flex-basis:88px}}@media(max-width:620px){.kutbi-photo-strip{padding:6px 0}.kutbi-photo-strip-track{gap:6px;animation-duration:28s}.kutbi-photo-strip-track img{width:72px;height:44px;flex-basis:72px;border-radius:7px}}@media(prefers-reduced-motion:reduce){.kutbi-photo-strip-track{animation:none!important}}
 ''', encoding='utf-8')
           PY
 
-      - name: Commit site changes
+      - name: Sync with latest main before committing
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main
+          git rebase origin/main
+
+      - name: Commit site changes
+        shell: bash
+        run: |
+          set -euo pipefail
           git add index.html header-photo-slider.css
           if git diff --cached --quiet; then
             echo 'No site changes needed.'
             exit 0
           fi
           git commit -m 'Update Kutbi horizontal photo strip'
-          git push origin HEAD:main
+
+      - name: Push with retry
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Push attempt $attempt failed; rebasing onto latest main..."
+              git fetch origin main
+              git rebase origin/main
+            fi
+          done
+          echo 'Unable to push horizontal photo strip after 3 attempts.'
+          exit 1
