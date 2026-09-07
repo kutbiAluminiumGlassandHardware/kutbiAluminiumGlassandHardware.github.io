@@ -72,4 +72,16 @@ jobs:
             exit 0
           fi
           git commit -m "Enhance project details page"
-          git push
+          # Another website workflow may push to main at the same time.
+          # Rebase onto the latest main before pushing to avoid non-fast-forward failures.
+          for attempt in 1 2 3; do
+            if git pull --rebase origin main && git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "Push attempt $attempt failed; refreshing main and retrying..."
+            git rebase --abort || true
+            git fetch origin main
+            git rebase origin/main
+          done
+          echo "Unable to push after 3 attempts"
+          exit 1
