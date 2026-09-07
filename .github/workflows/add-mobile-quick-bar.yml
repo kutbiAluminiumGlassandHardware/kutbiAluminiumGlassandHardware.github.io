@@ -3,13 +3,18 @@ name: Add mobile quick contact bar
 on:
   push:
     branches: [main]
+    paths:
+      - 'index.html'
+      - 'styles.css'
 
 permissions:
   contents: write
 
 jobs:
   add-mobile-bar:
-    if: ${{ !contains(github.event.head_commit.message, 'Add mobile quick contact bar') }}
+    # Only react to human changes to the website files. This prevents the
+    # workflow from re-triggering on commits made by other automation.
+    if: ${{ github.actor != 'github-actions[bot]' && !contains(github.event.head_commit.message, 'Add mobile quick contact bar') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -50,4 +55,13 @@ jobs:
             exit 0
           fi
           git commit -m "Add mobile quick contact bar"
-          git push
+          git pull --rebase origin main
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "Push attempt $attempt failed; rebasing latest main..."
+            git fetch origin main
+            git rebase origin/main
+          done
+          exit 1
