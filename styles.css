@@ -25,7 +25,7 @@ header::after{content:none!important;display:none!important;background:none!impo
 
 /* Services and homepage lead readability */
 main section .lead{color:#172033!important;text-shadow:none!important;font-weight:500!important}
-.hero .lead{color:#ffffff!important;background:rgba(6,24,63,.18)!important;padding:12px 14px!important;border-radius:10px!important;display:block!important;box-shadow:none!important}
+.hero .lead{color:#ffffff!important;background:transparent!important;padding:0!important;border-radius:0!important;display:block!important;box-shadow:none!important}
 .hero .lead strong{color:#f7b51d!important;font-weight:900!important}
 
 /* Services page: force high-contrast service headings, descriptions and links */
@@ -35,7 +35,7 @@ main .card a{color:#0757a6!important;text-shadow:none!important;font-weight:800!
 main section h2{color:#06183f!important;text-shadow:none!important}
 main section>.wrap>.eyebrow{color:#9a5a00!important;text-shadow:none!important}
 main section:not(.hero):not(.band){color:#172033!important}
-main section:not(.hero):not(.band) .lead{color:#243247!important;background:rgba(255,255,255,.96)!important;padding:10px 12px!important;border-radius:8px!important}
+main section:not(.hero):not(.band) .lead{color:#243247!important;background:transparent!important;padding:0!important;border-radius:0!important;box-shadow:none!important}
 
 /* Premium mobile sticky conversion bar — one clean bar */
 .mobile-quick-bar{display:none}
@@ -53,5 +53,7 @@ main section:not(.hero):not(.band) .lead{color:#243247!important;background:rgba
 /* Kutbi mobile quick bar positioning fix */
 @media(max-width:620px){.hero-actions .btn:first-child,.hero-actions .whatsapp,.hero-card .btn.full{position:static!important;left:auto!important;right:auto!important;bottom:auto!important;width:100%!important;margin:0!important}.mobile-quick-bar{position:fixed!important;left:10px!important;right:10px!important;bottom:10px!important;z-index:99999!important;width:auto!important;margin:0!important}}
 
-/* FINAL HERO TEXT CONTRAST OVERRIDE */
-.hero p.lead,.hero .lead,.hero .lead strong{opacity:1!important;visibility:visible!important;text-shadow:none!important}.hero p.lead,.hero .lead{color:#fff!important;background:rgba(6,24,63,.22)!important}.hero .lead strong{color:#f7b51d!important}
+/* FINAL PREMIUM TEXT OVERRIDE — no boxes */
+.hero p.lead,.hero .lead{opacity:1!important;visibility:visible!important;color:#fff!important;background:transparent!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;text-shadow:0 1px 10px rgba(0,0,0,.28)!important;max-width:780px!important}
+.hero .lead strong{color:#f7b51d!important;font-weight:900!important;text-shadow:0 1px 8px rgba(0,0,0,.25)!important}
+main section:not(.hero):not(.band) .lead{color:#243247!important;background:transparent!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;text-shadow:none!important;max-width:900px!important}
