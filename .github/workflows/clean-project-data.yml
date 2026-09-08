@@ -11,7 +11,6 @@ on:
 permissions:
   contents: write
 
-# Share the homepage/data lock so cleanup and homepage generation never push over each other.
 concurrency:
   group: kutbi-homepage-build
   cancel-in-progress: false
@@ -33,14 +32,49 @@ jobs:
           import json
           import re
           from pathlib import Path
+
           path = Path('images/projects/projects.json')
           data = json.loads(path.read_text(encoding='utf-8'))
-          if not isinstance(data, list): raise SystemExit('projects.json must contain a JSON array')
+          if not isinstance(data, list):
+              raise SystemExit('projects.json must contain a JSON array')
+
           changed = False
-          def setv(obj,key,value):
+
+          def setv(obj, key, value):
               global changed
-              if obj.get(key) != value: obj[key]=value; changed=True
+              if obj.get(key) != value:
+                  obj[key] = value
+                  changed = True
+
+          def clean_text(value):
+              if not isinstance(value, str):
+                  return value
+              original = value
+              # Remove social-media hashtags and keyword-stuffing labels from project copy.
+              value = re.sub(r'(?<!\w)#[A-Za-z0-9_\-]+', '', value)
+              value = re.sub(r'(?im)^\s*(seo\s*)?keywords?\s*:\s*.*$', '', value)
+              value = re.sub(r'(?im)^\s*hashtags?\s*:\s*.*$', '', value)
+              # Remove long comma/pipe-separated keyword-only lines.
+              lines = []
+              for line in value.splitlines():
+                  stripped = line.strip()
+                  if stripped and (stripped.count(',') >= 5 or stripped.count('|') >= 4) and len(stripped) < 500:
+                      continue
+                  lines.append(line.rstrip())
+              value = '\n'.join(lines)
+              value = re.sub(r'[ \t]{2,}', ' ', value)
+              value = re.sub(r'\n{3,}', '\n\n', value).strip()
+              if value != original:
+                  return value
+              return original
+
           fixes = {
+              '1788802419326': {
+                  'service': 'Aluminium Door Repair',
+                  'area': 'Bellandur, Bengaluru',
+                  'seoTitle': 'Aluminium Sliding Door Wheel Replacement & Repair in Bellandur, Bengaluru | Kutbi',
+                  'seoDescription': 'Aluminium sliding door wheel replacement and repair completed by Kutbi Aluminium Glass & Hardware in Bellandur, Bengaluru.'
+              },
               '1788151582184': {'service':'uPVC Door Repair','area':'JP Nagar, Bengaluru'},
               '1788151496057': {'service':'uPVC Door Repair','area':'Vijayanagar, Bengaluru','alt':'uPVC Sliding Door Repair and Wheel Replacement in Vijayanagar Bengaluru - Kutbi Aluminium Glass & Hardware'},
               '1787890889806': {'title':'Aluminium Sliding Window Wheel Replacement & Service in Whitefield, Bengaluru','area':'Whitefield, Bengaluru','service':'Aluminium Window Wheel Replacement'},
@@ -52,24 +86,54 @@ jobs:
               '1787375656869': {'title':'Aluminium Sliding Window Wheel Replacement & Service in Gottigere, Bannerghatta Road, Bengaluru','service':'Aluminium Window Wheel Replacement','area':'Gottigere, Bannerghatta Road, Bengaluru','description':'Aluminium sliding window wheel replacement and servicing completed by Kutbi Aluminium Glass & Hardware in Gottigere, Bannerghatta Road, Bengaluru. Worn window rollers were replaced and the sliding mechanism was serviced to restore smoother movement.\n\nWork completed:\n- Aluminium sliding window wheel replacement\n- Roller and sliding mechanism service\n- Window movement adjustment\n- Final operation check\n\nIf your aluminium sliding window is stuck, difficult to slide, noisy or not moving properly, contact Kutbi for professional window wheel replacement and repair in Bengaluru.','seoTitle':'Aluminium Sliding Window Wheel Replacement & Service in Gottigere, Bannerghatta Road, Bengaluru','seoDescription':'Aluminium sliding window wheel replacement and servicing completed in Gottigere, Bannerghatta Road, Bengaluru by Kutbi Aluminium Glass & Hardware.'},
               '1787336936760': {'title':'Broken Glass Replacement for Sliding Window Completed in Electronic City, Bengaluru','service':'Broken Glass Replacement','area':'Electronic City, Bengaluru','description':'Broken glass replacement for a sliding window completed by Kutbi Aluminium Glass & Hardware in Electronic City, Bengaluru. The damaged glass was removed and replaced with suitable new glass for the existing window, followed by a final fit and safety check.\n\nService completed:\n- Sliding window broken glass replacement\n- Damaged glass removal\n- New glass fitting\n- Final installation and inspection\n\nKutbi provides suitable broken glass replacement for aluminium and uPVC windows and doors across Bengaluru, subject to site inspection and glass availability.','seoTitle':'Broken Glass Replacement for Sliding Window in Electronic City, Bengaluru | Kutbi','seoDescription':'Broken glass replacement for a sliding window completed in Electronic City, Bengaluru by Kutbi Aluminium Glass & Hardware.'}
           }
+
           for project in data:
-              pid=project.get('id')
+              pid = str(project.get('id', ''))
               if pid in fixes:
-                  for key,value in fixes[pid].items():
-                      if key=='alt':
-                          for image in project.get('images',[]): setv(image,'alt',value)
-                      else: setv(project,key,value)
-          replacements={'Gottigerry Bannerghatta road':'Gottigere, Bannerghatta Road, Bengaluru','White field Bangalore':'Whitefield, Bengaluru','Gottigere, Bannerghatta Road, Bangalore.':'Gottigere, Bannerghatta Road, Bengaluru'}
+                  for key, value in fixes[pid].items():
+                      if key == 'alt':
+                          for image in project.get('images', []):
+                              setv(image, 'alt', value)
+                      else:
+                          setv(project, key, value)
+
+              # Keep project descriptions natural and useful for customers.
+              for field in ('title', 'description', 'seoTitle', 'seoDescription', 'area', 'service'):
+                  if field in project:
+                      cleaned = clean_text(project.get(field))
+                      setv(project, field, cleaned)
+
+              # Do not expose keyword stuffing through image metadata.
+              if 'keywords' in project:
+                  del project['keywords']
+                  changed = True
+
+              service = re.sub(r'\s+', ' ', str(project.get('service', 'window and door service'))).strip()
+              area = re.sub(r'\s+', ' ', str(project.get('area', 'Bengaluru'))).strip()
+              fallback = f'{service} in {area} - Kutbi Aluminium Glass & Hardware'
+
+              for image in project.get('images', []):
+                  if 'keywords' in image:
+                      del image['keywords']
+                      changed = True
+                  if image.get('alt'):
+                      setv(image, 'alt', clean_text(image.get('alt')))
+                  if not image.get('alt') or not str(image.get('alt')).strip():
+                      setv(image, 'alt', fallback)
+
+          replacements = {
+              'Gottigerry Bannerghatta road': 'Gottigere, Bannerghatta Road, Bengaluru',
+              'White field Bangalore': 'Whitefield, Bengaluru',
+              'Gottigere, Bannerghatta Road, Bangalore.': 'Gottigere, Bannerghatta Road, Bengaluru'
+          }
           for project in data:
-              if project.get('area') in replacements: setv(project,'area',replacements[project['area']])
-          for project in data:
-              service=re.sub(r'\s+',' ',str(project.get('service','window and door service'))).strip()
-              area=re.sub(r'\s+',' ',str(project.get('area','Bengaluru'))).strip()
-              fallback=f'{service} in {area} - Kutbi Aluminium Glass & Hardware'
-              for image in project.get('images',[]):
-                  if not image.get('alt') or not str(image.get('alt')).strip(): setv(image,'alt',fallback)
-          if changed: path.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-          else: print('No project-data changes required.')
+              if project.get('area') in replacements:
+                  setv(project, 'area', replacements[project['area']])
+
+          if changed:
+              path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          else:
+              print('No project-data changes required.')
 
       - name: Commit cleanup changes safely
         shell: bash
