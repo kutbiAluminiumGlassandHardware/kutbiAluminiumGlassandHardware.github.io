@@ -102,7 +102,7 @@ jobs:
 
           # Final safety checks before touching the real homepage file.
           if page.count('<html') != 1 or '</html>' not in page or '</main>' not in page: raise SystemExit('Generated homepage failed structural validation')
-          if '<div class="home-project-photos">' in page and 'home-project-photos'></div>' in page: raise SystemExit('Generated homepage contains malformed photo markup')
+          if '<div class="home-project-photos"></div>' in page: raise SystemExit('Generated homepage contains an empty photo container')
           tmp=homepage.with_suffix('.html.tmp')
           tmp.write_text(page,encoding='utf-8')
           tmp.replace(homepage)
