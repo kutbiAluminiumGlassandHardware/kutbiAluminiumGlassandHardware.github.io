@@ -4,46 +4,42 @@ on:
   push:
     branches: [main]
     paths:
-      - 'index.html'
+      - '.github/workflows/seo-homepage-positioning.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   optimize:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Refine homepage SEO positioning
+        with:
+          fetch-depth: 0
+          ref: main
+      - name: Strengthen homepage SEO positioning
+        shell: python
         run: |
-          python - <<'PY'
           from pathlib import Path
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          s = s.replace(
-              '<title>Kutbi Aluminium Glass &amp; Hardware | Aluminium &amp; uPVC Window Repair Bangalore</title>',
-              '<title>Kutbi Aluminium Glass &amp; Hardware | Aluminium &amp; uPVC Windows &amp; Doors Bangalore</title>'
-          )
-          s = s.replace(
-              '<meta name="description" content="Kutbi Aluminium Glass &amp; Hardware provides aluminium and uPVC window and door repair, sliding window repair, mosquito mesh, pigeon net, installation and glass repair services across Bengaluru.">',
-              '<meta name="description" content="Kutbi Aluminium Glass &amp; Hardware provides aluminium and uPVC windows and doors, repairs, sliding window service, mosquito mesh, pigeon net and glass repair across Bengaluru.">'
-          )
-          s = s.replace(
-              '<h1>Aluminium &amp; uPVC Window &amp; Door Repair Experts in Bangalore</h1>',
-              '<h1>Aluminium &amp; uPVC Windows &amp; Doors in Bangalore</h1>'
-          )
-          s = s.replace(
-              '<p class="lead"><strong>Your Satisfaction Our Motivation.</strong> Repair-first service for aluminium and uPVC sliding windows and doors,',
-              '<p class="lead"><strong>Your Satisfaction Our Motivation.</strong> Aluminium and uPVC windows and doors, with specialist repair-first service for sliding windows and doors,'
-          )
+          replacements = {
+              '<title>Kutbi Aluminium Glass &amp; Hardware | Aluminium &amp; uPVC Windows &amp; Doors Bangalore</title>':
+              '<title>Aluminium &amp; uPVC Window &amp; Door Repair Bangalore | Kutbi</title>',
+              '<meta name="description" content="Aluminium &amp; uPVC windows and doors in Bangalore for installation, repair and replacement, plus mosquito mesh, pigeon net and glass services from Kutbi Aluminium Glass &amp; Hardware.">':
+              '<meta name="description" content="Kutbi Aluminium Glass &amp; Hardware provides aluminium and uPVC window and door repair in Bangalore, including sliding windows, sliding doors, wheels, rollers, tracks, locks and handles, plus installation and related services.">'
+          }
+          for old, new in replacements.items():
+              s = s.replace(old, new)
           p.write_text(s, encoding='utf-8')
-          PY
-      - name: Commit SEO refinement
+      - name: Commit homepage SEO update
+        shell: bash
         run: |
+          set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git diff --cached --quiet && exit 0
-          git commit -m 'Refine homepage SEO positioning [skip ci]'
-          git push
+          if git diff --cached --quiet; then echo 'Homepage SEO already current.'; exit 0; fi
+          git commit -m 'Strengthen homepage repair SEO metadata [skip ci]'
+          git push origin HEAD:main
