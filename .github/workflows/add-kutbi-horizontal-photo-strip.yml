@@ -20,6 +20,20 @@ jobs:
           fetch-depth: 0
           ref: main
 
+      - name: Configure Git
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      - name: Sync with latest main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git reset --hard origin/main
+
       - name: Build horizontal photo strip
         shell: bash
         run: |
@@ -85,15 +99,6 @@ jobs:
 ''', encoding='utf-8')
           PY
 
-      - name: Sync with latest main before committing
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git fetch origin main
-          git rebase origin/main
-
       - name: Commit site changes
         shell: bash
         run: |
@@ -111,10 +116,11 @@ jobs:
           set -euo pipefail
           for attempt in 1 2 3; do
             if git push origin HEAD:main; then
+              echo 'Horizontal photo strip pushed successfully.'
               exit 0
             fi
             if [ "$attempt" -lt 3 ]; then
-              echo "Push attempt $attempt failed; rebasing onto latest main..."
+              echo "Push attempt $attempt failed; syncing and rebasing..."
               git fetch origin main
               git rebase origin/main
             fi
