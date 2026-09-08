@@ -23,8 +23,10 @@ header::after{content:none!important;display:none!important;background:none!impo
 /* Gallery readability */
 .gallery-hero .lead{color:#172033!important;font-weight:700!important;font-size:18px!important;line-height:1.65!important;text-shadow:none!important;max-width:920px;margin:14px auto 0!important}.gallery-hero{color:#172033!important}.gallery-hero h1{color:#06183f!important}.gallery-hero .eyebrow{color:#b66a00!important}@media(max-width:620px){.gallery-hero .lead{font-size:17px!important;line-height:1.6!important;padding:0 6px}}
 
-/* Services page lead readability */
-main section .lead{color:#172033!important;text-shadow:none!important}
+/* Services and homepage lead readability */
+main section .lead{color:#172033!important;text-shadow:none!important;font-weight:500!important}
+.hero .lead{color:#172033!important;background:rgba(255,255,255,.82)!important;padding:12px 14px!important;border-radius:10px!important;display:block!important;box-shadow:0 4px 14px rgba(6,24,63,.06)!important}
+.hero .lead strong{color:#06183f!important;font-weight:900!important}
 
 /* Premium mobile sticky conversion bar — one clean bar, no duplicate fixed hero buttons */
 .mobile-quick-bar{display:none}
