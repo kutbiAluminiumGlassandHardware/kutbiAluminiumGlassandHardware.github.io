@@ -6,12 +6,12 @@ on:
     branches: [main]
     paths:
       - 'images/photos/photos.json'
+      - 'images/projects/projects.json'
       - '.github/workflows/home-photo-gallery.yml'
 
 permissions:
   contents: write
 
-# Shared with the project builder so two homepage writers never race.
 concurrency:
   group: kutbi-homepage-build
   cancel-in-progress: false
@@ -26,6 +26,68 @@ jobs:
         with:
           fetch-depth: 0
           ref: main
+
+      - name: Sync Add Project photos into Photo Gallery
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+
+          project_file=Path('images/projects/projects.json')
+          photo_file=Path('images/photos/photos.json')
+          if not project_file.exists():
+              print('No projects.json found; keeping photo gallery unchanged.')
+              raise SystemExit(0)
+          projects=json.loads(project_file.read_text(encoding='utf-8'))
+          if not isinstance(projects,list):
+              raise SystemExit('projects.json must contain a JSON array')
+          photos=[]
+          if photo_file.exists():
+              photos=json.loads(photo_file.read_text(encoding='utf-8'))
+          if not isinstance(photos,list):
+              raise SystemExit('photos.json must contain a JSON array')
+
+          existing={str(x.get('path','')) for x in photos if isinstance(x,dict) and x.get('path')}
+          added=0
+          for project in projects:
+              if not isinstance(project,dict):
+                  continue
+              images=project.get('images',[])
+              if not isinstance(images,list):
+                  continue
+              for image in images:
+                  if not isinstance(image,dict) or not image.get('path'):
+                      continue
+                  path=str(image['path'])
+                  if path in existing:
+                      continue
+                  service=project.get('service') or 'Kutbi Work'
+                  area=project.get('area') or 'Bengaluru'
+                  record={
+                      'id':str(project.get('id',''))+'-'+str(added+1),
+                      'path':path,
+                      'type':image.get('type') or 'work',
+                      'service':service,
+                      'area':area,
+                      'date':project.get('date') or '',
+                      'sizeMB':image.get('sizeMB',''),
+                      'originalName':image.get('originalName',''),
+                      'seoFileName':path.rsplit('/',1)[-1],
+                      'description':project.get('description') or project.get('seoDescription') or (service+' completed in '+area+', Bengaluru by Kutbi Aluminium Glass & Hardware.'),
+                      'alt':image.get('alt') or (service+' in '+area+', Bengaluru - Kutbi Aluminium Glass & Hardware'),
+                      'keywords':image.get('keywords') or project.get('keywords') or [service,area,'Bengaluru','Bangalore','Kutbi Aluminium Glass & Hardware'],
+                      'metadataSource':'project-sync',
+                      'projectId':project.get('id'),
+                      'projectTitle':project.get('title','')
+                  }
+                  photos.insert(0,record)
+                  existing.add(path)
+                  added+=1
+
+          if added:
+              photo_file.write_text(json.dumps(photos,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print(f'Synced {added} new Add Project photo(s) into Photo Gallery. Total gallery records: {len(photos)}.')
+          PY
 
       - name: Validate photo manifest
         run: |
@@ -63,7 +125,6 @@ jobs:
               if end>=0:
                   s=s[:start]+s[end+len('</section>'):]
                   pos=s.find(marker)
-          # The slideshow reads photos.json in the browser; this compact section is deliberately static-safe.
           section='''<section id="homepage-photo-gallery" class="homepage-photo-gallery" aria-label="Kutbi real work photo slideshow"><div class="wrap"><div class="section-head" style="text-align:center"><div class="eyebrow">REAL KUTBI WORK PHOTOS</div><h2>Our Work Photo Gallery</h2><p>Real photos of Kutbi aluminium and uPVC window repair, door service, mosquito mesh, glass replacement and completed work across Bengaluru.</p></div><div class="homepage-photo-slider" id="homepage-photo-slider"><button class="photo-slide-btn photo-prev" type="button" aria-label="Previous photo">‹</button><div class="homepage-photo-stage" id="homepage-photo-stage"><div class="project-loading">Loading real Kutbi work photos…</div></div><button class="photo-slide-btn photo-next" type="button" aria-label="Next photo">›</button><div class="photo-slide-dots" id="photo-slide-dots" aria-label="Photo slideshow navigation"></div></div><p class="center" style="margin-top:22px"><a class="btn" href="photo-gallery.html">📸 View All Photos →</a></p></div><style>.homepage-photo-gallery{padding:42px 0;background:#fff}.homepage-photo-slider{position:relative;max-width:1000px;margin:22px auto 0}.homepage-photo-stage{position:relative;overflow:hidden;border-radius:18px;background:#eef1f4;box-shadow:0 8px 28px rgba(6,24,63,.13);aspect-ratio:16/8;min-height:250px}.homepage-photo-slide{display:none;width:100%;height:100%;position:relative;text-decoration:none;color:inherit}.homepage-photo-slide.active{display:block;animation:kutbiPhotoFade .55s ease}.homepage-photo-slide img{display:block;width:100%;height:100%;object-fit:contain;background:#f1f3f5}.homepage-photo-slide .photo-caption{position:absolute;left:0;right:0;bottom:0;padding:58px 22px 18px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.82));font-size:17px;font-weight:800}.homepage-photo-slide .photo-area{display:block;font-size:12px;font-weight:600;margin-top:4px;opacity:.92}.photo-slide-btn{position:absolute;z-index:3;top:50%;transform:translateY(-50%);width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.92);box-shadow:0 4px 15px rgba(0,0,0,.18);font-size:32px;line-height:38px;cursor:pointer}.photo-slide-btn:hover{transform:translateY(-50%) scale(1.06)}.photo-prev{left:14px}.photo-next{right:14px}.photo-slide-dots{display:flex;justify-content:center;gap:7px;margin-top:12px;flex-wrap:wrap}.photo-dot{width:9px;height:9px;padding:0;border:0;border-radius:50%;background:#bbb;cursor:pointer}.photo-dot.active{background:#333;transform:scale(1.2)}@keyframes kutbiPhotoFade{from{opacity:.35}to{opacity:1}}@media(max-width:600px){.homepage-photo-gallery{padding:34px 0}.homepage-photo-stage{aspect-ratio:4/3;min-height:250px}.homepage-photo-slide .photo-caption{font-size:14px;padding:50px 15px 14px}.photo-slide-btn{width:40px;height:40px;font-size:28px}.photo-prev{left:8px}.photo-next{right:8px}.photo-slide-dots{margin-top:10px}}</style><script>async function loadHomepagePhotoSlideshow(){const stage=document.getElementById('homepage-photo-stage'),dots=document.getElementById('photo-slide-dots'),slider=document.getElementById('homepage-photo-slider');let items=[],current=0,timer=null;try{const r=await fetch('images/photos/photos.json?ts='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error();const data=await r.json();items=(Array.isArray(data)?data:[]).filter(x=>x&&x.path).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).slice(0,12);if(!items.length){stage.innerHTML='<div class="project-loading" style="padding:30px">Real work photos will appear here as you upload them in Add Photos.</div>';return}stage.innerHTML='';dots.innerHTML='';items.forEach((x,i)=>{const a=document.createElement('a');a.className='homepage-photo-slide'+(i===0?' active':'');a.href='photo-gallery.html';a.setAttribute('aria-label','View photo gallery');const img=document.createElement('img');img.src=String(x.path).replace(/^\.\//,'').replace(/^\//,'');img.alt=x.alt||((x.service||'Kutbi work')+' in '+(x.area||'Bengaluru')+' - Kutbi Aluminium Glass & Hardware');img.loading=i===0?'eager':'lazy';img.decoding='async';const cap=document.createElement('span');cap.className='photo-caption';cap.textContent=x.service||'Kutbi Work';const area=document.createElement('span');area.className='photo-area';area.textContent=x.area||'Bengaluru';cap.appendChild(area);a.append(img,cap);stage.appendChild(a);const d=document.createElement('button');d.type='button';d.className='photo-dot'+(i===0?' active':'');d.setAttribute('aria-label','Show photo '+(i+1));d.addEventListener('click',()=>show(i));dots.appendChild(d)});function show(i){const slides=stage.querySelectorAll('.homepage-photo-slide'),ds=dots.querySelectorAll('.photo-dot');if(!slides.length)return;current=(i+items.length)%items.length;slides.forEach((el,n)=>el.classList.toggle('active',n===current));ds.forEach((el,n)=>el.classList.toggle('active',n===current))}function restart(){clearInterval(timer);if(items.length>1)timer=setInterval(()=>show(current+1),4000)}document.querySelector('.photo-prev').addEventListener('click',()=>{show(current-1);restart()});document.querySelector('.photo-next').addEventListener('click',()=>{show(current+1);restart()});slider.addEventListener('mouseenter',()=>clearInterval(timer));slider.addEventListener('mouseleave',restart);slider.addEventListener('focusin',()=>clearInterval(timer));slider.addEventListener('focusout',restart);let touchX=0;stage.addEventListener('touchstart',e=>{touchX=e.changedTouches[0].screenX},{passive:true});stage.addEventListener('touchend',e=>{const dx=e.changedTouches[0].screenX-touchX;if(Math.abs(dx)>45){show(current+(dx<0?1:-1));restart()}},{passive:true});restart()}catch(e){stage.innerHTML='<div class="project-loading" style="padding:30px">Photo gallery is updating. <a href="photo-gallery.html">View all photos →</a></div>'}}loadHomepagePhotoSlideshow();</script></section>'''
           out=s[:pos]+section+s[pos:]
           if out.count('<section id="homepage-photo-gallery"')!=1 or '</main>' not in out or '</html>' not in out:
@@ -72,22 +133,22 @@ jobs:
           print(f'Homepage photo gallery safely rebuilt using {len(data)} photo records.')
           PY
 
-      - name: Commit homepage photo gallery update
+      - name: Commit synchronized gallery and homepage update
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html
-          if git diff --cached --quiet; then echo 'No homepage photo changes required.'; exit 0; fi
-          git commit -m 'Safely update homepage photo gallery'
+          git add images/photos/photos.json index.html
+          if git diff --cached --quiet; then echo 'No gallery or homepage changes required.'; exit 0; fi
+          git commit -m 'Sync Add Project photos to Photo Gallery'
           for attempt in 1 2 3 4 5; do
             git fetch origin main
             if git rebase origin/main; then
-              if git push origin HEAD:main; then echo "Homepage photo update pushed on attempt $attempt."; exit 0; fi
+              if git push origin HEAD:main; then echo "Gallery sync pushed on attempt $attempt."; exit 0; fi
             else
               git rebase --abort || true
             fi
             sleep $((attempt * 2))
           done
-          echo 'Could not publish homepage photo gallery update after 5 attempts.'
+          echo 'Could not publish gallery sync after 5 attempts.'
           exit 1
