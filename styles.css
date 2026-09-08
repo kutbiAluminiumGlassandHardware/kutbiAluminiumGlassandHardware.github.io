@@ -28,7 +28,16 @@ main section .lead{color:#172033!important;text-shadow:none!important;font-weigh
 .hero .lead{color:#172033!important;background:rgba(255,255,255,.82)!important;padding:12px 14px!important;border-radius:10px!important;display:block!important;box-shadow:0 4px 14px rgba(6,24,63,.06)!important}
 .hero .lead strong{color:#06183f!important;font-weight:900!important}
 
-/* Premium mobile sticky conversion bar — one clean bar, no duplicate fixed hero buttons */
+/* Services page: force high-contrast service headings, descriptions and links */
+main .card h3{color:#06183f!important;text-shadow:none!important}
+main .card p{color:#344054!important;text-shadow:none!important}
+main .card a{color:#0757a6!important;text-shadow:none!important;font-weight:800!important}
+main section h2{color:#06183f!important;text-shadow:none!important}
+main section>.wrap>.eyebrow{color:#9a5a00!important;text-shadow:none!important}
+main section:not(.hero):not(.band){color:#172033!important}
+main section:not(.hero):not(.band) .lead{color:#243247!important;background:rgba(255,255,255,.96)!important;padding:10px 12px!important;border-radius:8px!important}
+
+/* Premium mobile sticky conversion bar — one clean bar */
 .mobile-quick-bar{display:none}
 @media(max-width:620px){body{padding-bottom:78px}.mobile-quick-bar{position:fixed;left:10px;right:10px;bottom:10px;z-index:9999;display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;padding:7px;background:rgba(6,24,63,.96);border:1px solid rgba(255,255,255,.16);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.28);backdrop-filter:blur(8px)}.mobile-quick-bar a{min-height:52px;display:flex;align-items:center;justify-content:center;gap:5px;border-radius:11px;color:#fff;font-size:14px;font-weight:800;text-decoration:none;line-height:1.1;text-align:center}.mobile-quick-bar a:nth-child(1){background:#f28c00}.mobile-quick-bar a:nth-child(2){background:#168b57}.mobile-quick-bar a:nth-child(3){background:#0b5cab}.mobile-quick-bar a:active{transform:translateY(1px)}}
 
