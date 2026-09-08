@@ -11,18 +11,26 @@ on:
 permissions:
   contents: write
 
+# Serialize every workflow that writes the shared gallery/homepage data.
+concurrency:
+  group: kutbi-gallery-build
+  cancel-in-progress: false
+
 jobs:
   sync-gallery:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: main
 
       - name: Sync project photos into Photo Gallery
         shell: bash
         run: |
+          set -euo pipefail
           python3 <<'PY'
           from pathlib import Path
           import json
@@ -111,6 +119,7 @@ jobs:
       - name: Commit synchronized Photo Gallery metadata
         shell: bash
         run: |
+          set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add images/photos/photos.json
@@ -119,4 +128,17 @@ jobs:
             exit 0
           fi
           git commit -m 'Sync Project Gallery photos to Photo Gallery'
-          git push
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if git rebase origin/main; then
+              if git push origin HEAD:main; then
+                echo "Photo Gallery sync pushed on attempt $attempt."
+                exit 0
+              fi
+            else
+              git rebase --abort || true
+            fi
+            sleep $((attempt * 2))
+          done
+          echo 'Could not publish Photo Gallery sync after 5 attempts.'
+          exit 1
