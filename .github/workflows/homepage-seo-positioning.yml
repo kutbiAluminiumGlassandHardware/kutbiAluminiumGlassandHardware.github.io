@@ -1,0 +1,81 @@
+name: Homepage SEO positioning
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/homepage-seo-positioning.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-homepage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Apply safe homepage SEO positioning
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('index.html')
+          if not p.exists():
+              raise SystemExit('index.html not found')
+          s = p.read_text(encoding='utf-8')
+
+          replacements = [
+              (
+                  r'<title>.*?</title>',
+                  '<title>Kutbi Aluminium Glass &amp; Hardware | Aluminium &amp; uPVC Windows &amp; Doors Bangalore</title>'
+              ),
+              (
+                  r'<meta\s+name=["\']description["\']\s+content=["\'][^"\']*["\']\s*/?>',
+                  '<meta name="description" content="Aluminium &amp; uPVC windows and doors in Bangalore for installation, repair and replacement, plus mosquito mesh, pigeon net and glass services from Kutbi Aluminium Glass &amp; Hardware.">'
+              ),
+              (
+                  r'<h1>Aluminium &amp; uPVC Window &amp; Door Repair Experts in Bangalore</h1>',
+                  '<h1>Aluminium &amp; uPVC Windows &amp; Doors in Bangalore</h1>'
+              ),
+          ]
+
+          for pattern, replacement in replacements:
+              s, n = re.subn(pattern, replacement, s, count=1, flags=re.I | re.S)
+              if n != 1:
+                  raise SystemExit(f'Expected exactly one homepage match, got {n}: {pattern}')
+
+          p.write_text(s, encoding='utf-8')
+          print('Homepage SEO positioning applied successfully.')
+          PY
+
+      - name: Verify homepage SEO changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'Kutbi Aluminium Glass &amp; Hardware | Aluminium &amp; uPVC Windows &amp; Doors Bangalore' index.html
+          grep -F 'Aluminium &amp; uPVC Windows &amp; Doors in Bangalore' index.html
+          grep -F 'Aluminium &amp; uPVC windows and doors in Bangalore for installation, repair and replacement' index.html
+
+      - name: Commit and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'No homepage changes needed.'
+            exit 0
+          fi
+          git commit -m 'Improve homepage SEO positioning'
+          git push origin HEAD:main
