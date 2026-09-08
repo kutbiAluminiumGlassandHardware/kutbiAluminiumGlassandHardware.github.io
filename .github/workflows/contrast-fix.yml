@@ -1,0 +1,51 @@
+name: Kutbi site-wide contrast fix
+
+on:
+  push:
+    paths:
+      - .github/contrast-fix-trigger
+
+permissions:
+  contents: write
+
+jobs:
+  fix-contrast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply contrast stylesheet
+        shell: bash
+        run: |
+          cat > contrast-fix.css <<'EOF'
+          /* Kutbi site-wide readability and contrast override */
+          main section:not(.hero):not(.final-cta), main section:not(.hero):not(.final-cta) * { text-shadow:none !important; }
+          main section:not(.hero):not(.final-cta) h2,
+          main section:not(.hero):not(.final-cta) h3,
+          main section:not(.hero):not(.final-cta) h4 { color:#06183f !important; }
+          main section:not(.hero):not(.final-cta) p,
+          main section:not(.hero):not(.final-cta) li,
+          main section:not(.hero):not(.final-cta) .lead,
+          main section:not(.hero):not(.final-cta) .section-intro { color:#243247 !important; }
+          main section:not(.hero):not(.final-cta) .card { color:#172033 !important; background:#fff !important; }
+          main section:not(.hero):not(.final-cta) .card p { color:#344054 !important; }
+          main section:not(.hero):not(.final-cta) a { color:#0757a6 !important; }
+          main section:not(.hero):not(.final-cta) .eyebrow { color:#8a5200 !important; }
+          .hero .lead { color:#06183f !important; background:rgba(255,255,255,.94) !important; padding:12px 14px !important; border-radius:10px !important; font-weight:600 !important; }
+          .hero .lead strong { color:#06183f !important; }
+          .hero-card h2 { color:#06183f !important; }
+          .hero-card p { color:#344054 !important; }
+          .final-cta p { color:#f1f5fb !important; }
+          @media(max-width:620px){ main section:not(.hero):not(.final-cta) .lead { font-size:17px !important; line-height:1.65 !important; } }
+          EOF
+          for f in *.html; do
+            [ -f "$f" ] || continue
+            if ! grep -q 'contrast-fix.css' "$f"; then
+              sed -i 's#</head>#<link rel="stylesheet" href="contrast-fix.css?v=20260908">\n</head>#' "$f"
+            fi
+          done
+          rm -f .github/contrast-fix-trigger
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add contrast-fix.css ./*.html .github/contrast-fix-trigger
+          git commit -m "Apply site-wide text contrast fix" || exit 0
+          git push
