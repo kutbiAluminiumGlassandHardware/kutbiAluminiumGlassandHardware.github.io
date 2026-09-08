@@ -44,8 +44,12 @@ jobs:
                   '<meta name="description" content="Aluminium &amp; uPVC windows and doors in Bangalore for installation, repair and replacement, plus mosquito mesh, pigeon net and glass services from Kutbi Aluminium Glass &amp; Hardware.">'
               ),
               (
-                  r'<h1>Aluminium &amp; uPVC Window &amp; Door Repair Experts in Bangalore</h1>',
-                  '<h1>Aluminium &amp; uPVC Windows &amp; Doors in Bangalore</h1>'
+                  r'<div class="eyebrow">(?:Bengaluru Window &amp; Door Specialists|Aluminium &amp; uPVC Window &amp; Door Repair Specialists in Bangalore)</div>',
+                  '<div class="eyebrow">Aluminium &amp; uPVC Window &amp; Door Repair Specialists in Bangalore</div>'
+              ),
+              (
+                  r'<h1>Aluminium &amp; uPVC (?:Window &amp; Door Repair Experts|Windows &amp; Doors|Windows &amp; Doorsrepair specialist) in Bangalore</h1>',
+                  '<h1>Aluminium &amp; uPVC Window &amp; Door Repair Specialists in Bangalore</h1>'
               ),
           ]
 
@@ -55,7 +59,7 @@ jobs:
                   raise SystemExit(f'Expected exactly one homepage match, got {n}: {pattern}')
 
           p.write_text(s, encoding='utf-8')
-          print('Homepage SEO positioning applied successfully.')
+          print('Homepage repair specialist heading applied successfully.')
           PY
 
       - name: Verify homepage SEO changes
@@ -63,7 +67,7 @@ jobs:
         run: |
           set -euo pipefail
           grep -F 'Kutbi Aluminium Glass &amp; Hardware | Aluminium &amp; uPVC Windows &amp; Doors Bangalore' index.html
-          grep -F 'Aluminium &amp; uPVC Windows &amp; Doors in Bangalore' index.html
+          grep -F 'Aluminium &amp; uPVC Window &amp; Door Repair Specialists in Bangalore' index.html
           grep -F 'Aluminium &amp; uPVC windows and doors in Bangalore for installation, repair and replacement' index.html
 
       - name: Commit and push
@@ -77,5 +81,5 @@ jobs:
             echo 'No homepage changes needed.'
             exit 0
           fi
-          git commit -m 'Improve homepage SEO positioning'
+          git commit -m 'Set homepage repair specialist heading'
           git push origin HEAD:main
