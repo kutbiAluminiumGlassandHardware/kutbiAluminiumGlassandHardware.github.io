@@ -11,9 +11,10 @@ on:
 permissions:
   contents: write
 
-# Serialize every workflow that writes the shared gallery/homepage data.
+# Share the same lock as every homepage writer so gallery/project/photo updates
+# are serialized instead of racing to push different versions of main.
 concurrency:
-  group: kutbi-gallery-build
+  group: kutbi-homepage-build
   cancel-in-progress: false
 
 jobs:
