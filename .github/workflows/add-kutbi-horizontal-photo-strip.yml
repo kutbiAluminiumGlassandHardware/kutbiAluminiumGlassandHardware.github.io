@@ -2,17 +2,26 @@ name: Add Kutbi horizontal photo strip
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'images/projects/**'
+      - 'images/projects/projects.json'
+      - 'images/photos/photos.json'
+      - '.github/workflows/add-kutbi-horizontal-photo-strip.yml'
 
 permissions:
   contents: write
 
+# Use the same lock as the homepage/photo-gallery writer so workflows cannot race.
 concurrency:
-  group: kutbi-horizontal-photo-strip
+  group: kutbi-homepage-build
   cancel-in-progress: false
 
 jobs:
   update-site:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -114,16 +123,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for attempt in 1 2 3; do
-            if git push origin HEAD:main; then
-              echo 'Horizontal photo strip pushed successfully.'
-              exit 0
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            if git rebase origin/main; then
+              if git push origin HEAD:main; then
+                echo "Horizontal photo strip pushed successfully on attempt $attempt."
+                exit 0
+              fi
+            else
+              git rebase --abort || true
+              git reset --hard origin/main
             fi
-            if [ "$attempt" -lt 3 ]; then
-              echo "Push attempt $attempt failed; syncing and rebasing..."
-              git fetch origin main
-              git rebase origin/main
-            fi
+            sleep $((attempt * 2))
           done
-          echo 'Unable to push horizontal photo strip after 3 attempts.'
+          echo 'Unable to push horizontal photo strip after 5 attempts.'
           exit 1
