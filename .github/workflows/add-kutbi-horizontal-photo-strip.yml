@@ -1,9 +1,6 @@
 name: Add Kutbi horizontal photo strip
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -60,8 +57,7 @@ jobs:
               return 'Kutbi ' + s[:150]
 
           imgs = ''.join(
-              f'<img src="{html.escape(p.relative_to(root).as_posix())}" '
-              f'alt="{html.escape(alt_from_name(p))}" loading="lazy" decoding="async">'
+              f'<img src="{html.escape(p.relative_to(root).as_posix())}" alt="{html.escape(alt_from_name(p))}" loading="lazy" decoding="async">'
               for p in files
           )
 
