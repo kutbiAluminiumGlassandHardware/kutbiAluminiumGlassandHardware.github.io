@@ -1,0 +1,49 @@
+name: SEO homepage positioning
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Refine homepage SEO positioning
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace(
+              '<title>Kutbi Aluminium Glass &amp; Hardware | Aluminium &amp; uPVC Window Repair Bangalore</title>',
+              '<title>Kutbi Aluminium Glass &amp; Hardware | Aluminium &amp; uPVC Windows &amp; Doors Bangalore</title>'
+          )
+          s = s.replace(
+              '<meta name="description" content="Kutbi Aluminium Glass &amp; Hardware provides aluminium and uPVC window and door repair, sliding window repair, mosquito mesh, pigeon net, installation and glass repair services across Bengaluru.">',
+              '<meta name="description" content="Kutbi Aluminium Glass &amp; Hardware provides aluminium and uPVC windows and doors, repairs, sliding window service, mosquito mesh, pigeon net and glass repair across Bengaluru.">'
+          )
+          s = s.replace(
+              '<h1>Aluminium &amp; uPVC Window &amp; Door Repair Experts in Bangalore</h1>',
+              '<h1>Aluminium &amp; uPVC Windows &amp; Doors in Bangalore</h1>'
+          )
+          s = s.replace(
+              '<p class="lead"><strong>Your Satisfaction Our Motivation.</strong> Repair-first service for aluminium and uPVC sliding windows and doors,',
+              '<p class="lead"><strong>Your Satisfaction Our Motivation.</strong> Aluminium and uPVC windows and doors, with specialist repair-first service for sliding windows and doors,'
+          )
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit SEO refinement
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m 'Refine homepage SEO positioning [skip ci]'
+          git push
