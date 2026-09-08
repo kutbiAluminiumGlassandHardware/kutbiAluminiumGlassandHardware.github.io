@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'images/projects/**'
-      - 'trigger-kutbi-horizontal-photo-strip.txt'
   workflow_dispatch:
 
 permissions:
