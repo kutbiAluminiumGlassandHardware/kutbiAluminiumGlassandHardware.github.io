@@ -10,22 +10,28 @@
     input.parentNode.insertBefore(button,input);
     input.style.display='none';
     button.addEventListener('click',async function(){
-      if(window.showOpenFilePicker){
+      /* Prefer the browser's native system file picker. On Android this is the
+         Documents/Files picker when the browser supports File System Access. */
+      if(typeof window.showOpenFilePicker==='function'){
         try{
           const handles=await window.showOpenFilePicker({
-            multiple:input.multiple,
-            types:[{description:'Image files',accept:{'image/jpeg':['.jpg','.jpeg'],'image/png':['.png'],'image/webp':['.webp'],'image/gif':['.gif']}}]
+            multiple:!!input.multiple,
+            excludeAcceptAllOption:false,
+            types:[{description:'Photos',accept:{'image/jpeg':['.jpg','.jpeg'],'image/png':['.png'],'image/webp':['.webp'],'image/gif':['.gif']}}]
           });
           const files=await Promise.all(handles.map(h=>h.getFile()));
           const dt=new DataTransfer();
           files.forEach(f=>dt.items.add(f));
           input.files=dt.files;
+          input.dispatchEvent(new Event('change',{bubbles:true}));
           button.textContent='✓ '+files.length+' photo(s) selected from Files';
-        }catch(e){
-          if(e&&e.name==='AbortError')return;
-          input.click();
-        }
-      }else input.click();
+          return;
+        }catch(e){if(e&&e.name==='AbortError')return;}
+      }
+      /* Android Chrome/WebView versions without showOpenFilePicker cannot be
+         forced by a webpage to choose Files instead of the system Photo Picker.
+         Use the normal input as the compatible fallback. */
+      input.click();
     });
   }
   function setupAll(){
