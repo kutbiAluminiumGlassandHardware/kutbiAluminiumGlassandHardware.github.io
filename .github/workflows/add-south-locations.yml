@@ -1,0 +1,46 @@
+name: Add South Bengaluru locations to homepage
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  add-south-locations:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Update homepage location list
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = 'Bannerghatta Road · Gottigere · Kalena Agrahara · Arekere · JP Nagar · BTM Layout · Jayanagar · Hulimavu · Begur · Electronic City · HSR Layout · Whitefield · Koramangala · Basavanagudi · Sarjapur · Kudlu Gate · Marathahalli · Indiranagar · Akshaya Nagar · Arekere MICO Layout · Lakshmi Layout'
+          new = 'Bannerghatta Road · Gottigere · Kalena Agrahara · Arekere · JP Nagar · Jayanagar · Banashankari · BTM Layout · HSR Layout · Koramangala · Basavanagudi · Hulimavu · Begur · Bommanahalli · Hongasandra · Singasandra · Kudlu Gate · Devarachikkana Halli · Electronic City Phase 1 · Electronic City Phase 2 · Doddathoguru · Neeladri Road · Konappana Agrahara · Chandapura · Anjanapura · Kanakapura Road · Konanakunte · Vajarahalli · Thalaghattapura · Uttarahalli · Subramanyapura · Vasanthapura · Chikkalasandra · Ittamadu · Padmanabhanagar · Kathriguppe · Hosakerehalli · Rajarajeshwari Nagar · Electronic City · Whitefield · Sarjapur · Marathahalli · Indiranagar · Akshaya Nagar · Arekere MICO Layout · Lakshmi Layout'
+          if old not in s:
+              print('Existing homepage location list not found; no change made.')
+              raise SystemExit(0)
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+          print('Homepage South Bengaluru locations added.')
+          PY
+
+      - name: Commit homepage update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          if git diff --cached --quiet; then
+            echo 'No homepage changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Add expanded South Bengaluru service areas to homepage'
+          git push origin HEAD:main
