@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: homepage-location-update
+  cancel-in-progress: false
+
 jobs:
   add-south-locations:
     runs-on: ubuntu-latest
@@ -21,16 +25,37 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          old = 'Bannerghatta Road · Gottigere · Kalena Agrahara · Arekere · JP Nagar · BTM Layout · Jayanagar · Hulimavu · Begur · Electronic City · HSR Layout · Whitefield · Koramangala · Basavanagudi · Sarjapur · Kudlu Gate · Marathahalli · Indiranagar · Akshaya Nagar · Arekere MICO Layout · Lakshmi Layout'
-          new = 'Bannerghatta Road · Gottigere · Kalena Agrahara · Arekere · JP Nagar · Jayanagar · Banashankari · BTM Layout · HSR Layout · Koramangala · Basavanagudi · Hulimavu · Begur · Bommanahalli · Hongasandra · Singasandra · Kudlu Gate · Devarachikkana Halli · Electronic City Phase 1 · Electronic City Phase 2 · Doddathoguru · Neeladri Road · Konappana Agrahara · Chandapura · Anjanapura · Kanakapura Road · Konanakunte · Vajarahalli · Thalaghattapura · Uttarahalli · Subramanyapura · Vasanthapura · Chikkalasandra · Ittamadu · Padmanabhanagar · Kathriguppe · Hosakerehalli · Rajarajeshwari Nagar · Electronic City · Whitefield · Sarjapur · Marathahalli · Indiranagar · Akshaya Nagar · Arekere MICO Layout · Lakshmi Layout'
-          if old not in s:
-              print('Existing homepage location list not found; no change made.')
-              raise SystemExit(0)
-          s = s.replace(old, new, 1)
+          locations = [
+              'Bannerghatta Road','Gottigere','Kalena Agrahara','Arekere','JP Nagar','Jayanagar','Banashankari',
+              'BTM Layout','HSR Layout','Koramangala','Basavanagudi','Hulimavu','Begur','Bommanahalli','Hongasandra',
+              'Singasandra','Kudlu Gate','Devarachikkana Halli','Electronic City Phase 1','Electronic City Phase 2',
+              'Doddathoguru','Neeladri Road','Konappana Agrahara','Chandapura','Anjanapura','Kanakapura Road',
+              'Konanakunte','Vajarahalli','Thalaghattapura','Uttarahalli','Subramanyapura','Vasanthapura',
+              'Chikkalasandra','Ittamadu','Padmanabhanagar','Kathriguppe','Hosakerehalli','Rajarajeshwari Nagar',
+              'Electronic City','Whitefield','Sarjapur','Marathahalli','Indiranagar','Akshaya Nagar',
+              'Arekere MICO Layout','Lakshmi Layout'
+          ]
+          new_text = ' · '.join(locations)
+          # Replace the first homepage location list regardless of the exact previous list.
+          pattern = re.compile(r'(Bangalore Service Areas.*?</h2>.*?<p[^>]*>.*?</p>)(.*?)(<[^>]*>View all Bangalore service areas)', re.I | re.S)
+          m = pattern.search(s)
+          if m:
+              block = m.group(2)
+              block = re.sub(r'<(?:ul|div)[^>]*>.*?</(?:ul|div)>', '<p class="service-area-list">' + new_text + '</p>', block, count=1, flags=re.I | re.S)
+              s = s[:m.start(2)] + block + s[m.end(2):]
+          else:
+              # Fallback: replace the known old text wherever it appears.
+              old = 'Bannerghatta Road · Gottigere · Kalena Agrahara · Arekere · JP Nagar · BTM Layout · Jayanagar · Hulimavu · Begur · Electronic City · HSR Layout · Whitefield · Koramangora · Basavanagudi · Sarjapur · Kudlu Gate · Marathahalli · Indiranagar · Akshaya Nagar · Arekere MICO Layout · Lakshmi Layout'
+              if old in s:
+                  s = s.replace(old, new_text, 1)
+              else:
+                  print('Homepage location section not found; stopping without a commit.')
+                  raise SystemExit(0)
           p.write_text(s, encoding='utf-8')
-          print('Homepage South Bengaluru locations added.')
+          print('Expanded South Bengaluru locations written to homepage.')
           PY
 
       - name: Commit homepage update
@@ -42,5 +67,6 @@ jobs:
             echo 'No homepage changes to commit.'
             exit 0
           fi
-          git commit -m 'Add expanded South Bengaluru service areas to homepage'
+          git commit -m 'Expand South Bengaluru service areas on homepage'
+          git pull --rebase origin main
           git push origin HEAD:main
