@@ -1,0 +1,45 @@
+name: Update homepage reviews
+
+on:
+  push:
+    paths:
+      - 'review-update-trigger.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  update-homepage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update review count and add customer reviews section
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('index.html')
+          html = path.read_text(encoding='utf-8')
+
+          html = html.replace('488+', '498+')
+
+          marker = '<section class="band">'
+          if 'id="customer-reviews-homepage"' not in html:
+              section = '''<section id="customer-reviews-homepage" aria-label="Kutbi customer reviews" style="padding:64px 20px;background:#f7f9fc"><div class="wrap" style="max-width:900px;margin:0 auto"><div style="text-align:center"><div class="eyebrow">CUSTOMER FEEDBACK</div><h2>See What Our Customers Are Saying</h2><p class="section-intro">Real customer feedback about Kutbi Aluminium Glass &amp; Hardware services.</p><div style="font-size:22px;font-weight:800;margin:14px 0 28px">★★★★★ <span style="font-size:18px">4.9/5 · 498 Google Reviews</span></div></div><div style="display:grid;grid-template-columns:1fr;gap:16px"><article style="background:#fff;border:1px solid #e1e6ed;border-radius:16px;padding:22px;box-shadow:0 7px 24px rgba(6,24,63,.08)"><div style="font-size:18px;letter-spacing:2px">★★★★★</div><p style="line-height:1.7;color:#4d5862;margin:10px 0 0">“Very professional. Value for money affordable rates and no need to bargain. Serviced and addressed all the concerns with french and normal windows. He was on time and completed the work within 30 mins.”</p></article><article style="background:#fff;border:1px solid #e1e6ed;border-radius:16px;padding:22px;box-shadow:0 7px 24px rgba(6,24,63,.08)"><div style="font-size:18px;letter-spacing:2px">★★★★★</div><p style="line-height:1.7;color:#4d5862;margin:10px 0 0">“I am satisfied with the window roller replacement service. The aluminium sliding window is now moving smoothly and the work was completed neatly.”</p></article><article style="background:#fff;border:1px solid #e1e6ed;border-radius:16px;padding:22px;box-shadow:0 7px 24px rgba(6,24,63,.08)"><div style="font-size:18px;letter-spacing:2px">★★★★★</div><p style="line-height:1.7;color:#4d5862;margin:10px 0 0">“Kutbi Aluminium Glass &amp; Hardware provided good uPVC window repair service. The team handled the hardware issue professionally.”</p></article></div><p class="center" style="margin-top:24px"><a class="btn" href="https://www.google.com/search?q=Kutbi+Aluminium+Glass+Hardware+Bangalore&amp;ludocid=10154872758820126751#lrd" target="_blank" rel="noopener">⭐ See All Google Reviews</a></p></div></section>'''
+              if marker not in html:
+                  raise SystemExit('Homepage insertion marker not found')
+              html = html.replace(marker, section + marker, 1)
+
+          path.write_text(html, encoding='utf-8')
+
+      - name: Commit homepage update and remove temporary files
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f review-update-trigger.txt .github/workflows/update-homepage-reviews.yml
+          git add index.html review-update-trigger.txt .github/workflows/update-homepage-reviews.yml
+          git commit -m "Update homepage Google reviews"
+          git push
