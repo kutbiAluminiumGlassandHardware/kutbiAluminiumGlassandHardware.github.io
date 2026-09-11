@@ -8,7 +8,7 @@ on:
       - 'images/projects/**'
       - 'images/projects/projects.json'
       - 'images/photos/photos.json'
-      - '.github/workflows/add-kutbi-horizontal-photo-strip.yml'
+      - 'project-gallery.html'
 
 permissions:
   contents: write
