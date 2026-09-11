@@ -1,0 +1,39 @@
+name: Fix homepage project upload ordering
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  fix-order:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update homepage ordering logic
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = "new Date(b.date||0)-new Date(a.date||0)||(Number(b.id)||0)-(Number(a.id)||0)"
+          new = "new Date(b.uploadedAt||b.date||0)-new Date(a.uploadedAt||a.date||0)||(Number(b.id)||0)-(Number(a.id)||0)"
+          if old not in s:
+              print('Homepage sort expression already fixed or not found; no change needed.')
+          else:
+              s = s.replace(old, new)
+              p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit homepage fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No homepage changes needed."
+          else
+            git commit -m "Show newly uploaded projects first on homepage"
+            git push
+          fi
