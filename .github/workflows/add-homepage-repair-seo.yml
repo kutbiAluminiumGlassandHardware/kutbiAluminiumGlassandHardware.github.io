@@ -26,6 +26,7 @@ jobs:
           path = Path('index.html')
           text = path.read_text(encoding='utf-8')
           marker = '<section class="kutbi-repair-seo"'
+          insertion = '<section class="visual-showcase"'
 
           if marker in text:
               print('Section already present; no changes needed.')
@@ -33,10 +34,10 @@ jobs:
 
           section = '''<section class="kutbi-repair-seo" aria-label="Aluminium and uPVC window and door repair services in Bangalore"><div class="wrap"><div class="section-head"><div class="eyebrow">WINDOW &amp; DOOR REPAIR SERVICES</div><h2>Aluminium &amp; uPVC Window Repair Services in Bangalore</h2><p>Beyond our existing services and real project work, Kutbi Aluminium Glass &amp; Hardware provides professional aluminium and uPVC windows repair across Bangalore. We repair sliding windows and doors that are stuck, jammed, difficult to move or not closing properly, with service for rollers, wheels, tracks, alignment, handles, locks, rubber beading and related hardware.</p><p>Our repair-first service also covers <a href="aluminium-window-repair-bangalore.html">aluminium sliding window and door repairs</a>, <a href="upvc-window-repair-bangalore.html">uPVC window and door repairs</a>, suitable broken glass replacement, and <a href="mosquito-mesh-bangalore.html">mosquito mesh repair and replacement</a>. We also provide pigeon net installation and other related window and door services.</p><p>We serve customers across Gottigere, Kalena Agrahara, Bannerghatta Road, Hulimavu, Arekere, JP Nagar, Jayanagar, HSR Layout, Electronic City, Whitefield and surrounding areas of Bengaluru.</p><div class="home-project-actions"><a class="btn" href="services.html">Explore Repair Services →</a><a class="btn whatsapp" href="https://wa.me/919979204616?text=Hello%20Kutbi%2C%20I%20need%20a%20window%20or%20door%20repair">💬 Ask Kutbi About a Repair</a></div></div></div><style>.kutbi-repair-seo{padding:52px 20px;background:#fff}.kutbi-repair-seo .section-head{max-width:950px;margin:0 auto}.kutbi-repair-seo h2{margin:8px 0 14px}.kutbi-repair-seo p{color:#4d5862;line-height:1.75;margin:0 0 14px}.kutbi-repair-seo a:not(.btn){font-weight:700}@media(max-width:650px){.kutbi-repair-seo{padding:42px 16px}}</style></section>'''
 
-          if marker not in text:
-              raise SystemExit('Expected homepage insertion point not found; no changes made.')
+          if insertion not in text:
+              raise SystemExit('Homepage visual showcase insertion point not found; no changes made.')
 
-          updated = text.replace('<section class="visual-showcase"', section + '<section class="visual-showcase"', 1)
+          updated = text.replace(insertion, section + insertion, 1)
           path.write_text(updated, encoding='utf-8')
           print('Added new repair SEO section. Existing homepage content was preserved.')
           PY
