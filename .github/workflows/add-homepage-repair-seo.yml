@@ -1,0 +1,51 @@
+name: Add Homepage Repair SEO Section
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/add-homepage-repair-seo.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  add-section:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Add supporting repair SEO section only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
+          marker = '<section class="kutbi-repair-seo"'
+
+          if marker in text:
+              print('Section already present; no changes needed.')
+              raise SystemExit(0)
+
+          section = '''<section class="kutbi-repair-seo" aria-label="Aluminium and uPVC window and door repair services in Bangalore"><div class="wrap"><div class="section-head"><div class="eyebrow">WINDOW &amp; DOOR REPAIR SERVICES</div><h2>Aluminium &amp; uPVC Window Repair Services in Bangalore</h2><p>Beyond our existing services and real project work, Kutbi Aluminium Glass &amp; Hardware provides professional aluminium and uPVC windows repair across Bangalore. We repair sliding windows and doors that are stuck, jammed, difficult to move or not closing properly, with service for rollers, wheels, tracks, alignment, handles, locks, rubber beading and related hardware.</p><p>Our repair-first service also covers <a href="aluminium-window-repair-bangalore.html">aluminium sliding window and door repairs</a>, <a href="upvc-window-repair-bangalore.html">uPVC window and door repairs</a>, suitable broken glass replacement, and <a href="mosquito-mesh-bangalore.html">mosquito mesh repair and replacement</a>. We also provide pigeon net installation and other related window and door services.</p><p>We serve customers across Gottigere, Kalena Agrahara, Bannerghatta Road, Hulimavu, Arekere, JP Nagar, Jayanagar, HSR Layout, Electronic City, Whitefield and surrounding areas of Bengaluru.</p><div class="home-project-actions"><a class="btn" href="services.html">Explore Repair Services →</a><a class="btn whatsapp" href="https://wa.me/919979204616?text=Hello%20Kutbi%2C%20I%20need%20a%20window%20or%20door%20repair">💬 Ask Kutbi About a Repair</a></div></div></div><style>.kutbi-repair-seo{padding:52px 20px;background:#fff}.kutbi-repair-seo .section-head{max-width:950px;margin:0 auto}.kutbi-repair-seo h2{margin:8px 0 14px}.kutbi-repair-seo p{color:#4d5862;line-height:1.75;margin:0 0 14px}.kutbi-repair-seo a:not(.btn){font-weight:700}@media(max-width:650px){.kutbi-repair-seo{padding:42px 16px}}</style></section>'''
+
+          if marker not in text:
+              raise SystemExit('Expected homepage insertion point not found; no changes made.')
+
+          updated = text.replace('<section class="visual-showcase"', section + '<section class="visual-showcase"', 1)
+          path.write_text(updated, encoding='utf-8')
+          print('Added new repair SEO section. Existing homepage content was preserved.')
+          PY
+
+      - name: Commit homepage addition and remove temporary workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html .github/workflows/add-homepage-repair-seo.yml
+          git rm .github/workflows/add-homepage-repair-seo.yml
+          git commit -m "Add homepage repair SEO content without changing existing sections"
+          git push
