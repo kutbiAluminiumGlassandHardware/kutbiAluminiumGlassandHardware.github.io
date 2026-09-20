@@ -63,18 +63,7 @@
       <div class="kutbi-request-panel" data-step="2">
         <div class="kutbi-request-selected" id="kutbi-request-selected"></div>
         <h3>What is the problem?</h3>
-        <div class="kutbi-request-options compact" id="kutbi-request-problems">
-          <button type="button" data-problem="Stuck / jammed">Stuck / jammed</button>
-          <button type="button" data-problem="Hard to slide / move">Hard to slide / move</button>
-          <button type="button" data-problem="Wheel / roller problem">Wheel / roller problem</button>
-          <button type="button" data-problem="Track / channel problem">Track / channel problem</button>
-          <button type="button" data-problem="Handle problem">Handle problem</button>
-          <button type="button" data-problem="Lock problem">Lock problem</button>
-          <button type="button" data-problem="Not closing properly">Not closing properly</button>
-          <button type="button" data-problem="Damaged / replacement required">Damaged / replacement required</button>
-          <button type="button" data-problem="New installation">New installation</button>
-          <button type="button" data-problem="Other / need inspection">Other / need inspection</button>
-        </div>
+        <div class="kutbi-request-options compact" id="kutbi-request-problems"></div>
       </div>
       <div class="kutbi-request-panel" data-step="3">
         <div class="kutbi-request-selected" id="kutbi-request-selected-3"></div>
@@ -125,8 +114,31 @@
   document.querySelectorAll('.kutbi-request-open').forEach(b=>b.addEventListener('click',open));
   modal.querySelectorAll('[data-request-close]').forEach(b=>b.addEventListener('click',close));
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal.classList.contains('open'))close()});
-  modal.querySelectorAll('[data-service]').forEach(b=>b.addEventListener('click',()=>{state.service=b.dataset.service;show(2)}));
-  modal.querySelectorAll('[data-problem]').forEach(b=>b.addEventListener('click',()=>{state.problem=b.dataset.problem;show(3)}));
+  const problemSets={
+    'Aluminium Window Repair':['Stuck / jammed','Hard to slide / move','Wheel / roller problem','Track / channel problem','Handle problem','Lock problem','Not closing properly','Damaged / replacement required','Alignment / adjustment required','Other / need inspection'],
+    'uPVC Window Repair':['Stuck / jammed','Hard to slide / move','Wheel / roller problem','Track / channel problem','Handle problem','Lock problem','Not closing properly','Damaged / replacement required','Alignment / adjustment required','Other / need inspection'],
+    'Aluminium Sliding Door Repair':['Stuck / jammed','Hard to slide / move','Wheel / roller problem','Track / channel problem','Handle problem','Lock problem','Not closing properly','Damaged / replacement required','Alignment / adjustment required','Other / need inspection'],
+    'uPVC Sliding Door Repair':['Stuck / jammed','Hard to slide / move','Wheel / roller problem','Track / channel problem','Handle problem','Lock problem','Not closing properly','Damaged / replacement required','Alignment / adjustment required','Other / need inspection'],
+    'Window Roller & Wheel Replacement':['Worn or damaged wheel / roller','Window is hard to slide','Window is stuck','Wheel / roller is making noise','Wheel / roller replacement required','Other / need inspection'],
+    'Window Track Repair':['Track is damaged or worn','Window is hard to slide','Window is stuck on the track','Track is obstructed or dirty','Track replacement required','Track alignment / adjustment required','Other / need inspection'],
+    'Window Handle & Lock Replacement':['Broken handle','Loose handle','Handle not working','Broken lock','Lock not working','Window / door not locking','Handle or lock replacement required','Other / need inspection'],
+    'Mosquito Mesh Repair & Replacement':['Torn mosquito mesh','Damaged mesh','Old mesh replacement','Mesh coming out of frame','Loose mesh','Mosquitoes entering through damaged mesh','New mosquito mesh installation','Mesh repair required','Other / need inspection'],
+    'Broken Glass Replacement':['Cracked glass replacement','Broken glass replacement','Damaged glass replacement','Window glass replacement','Door glass replacement','Other / need inspection'],
+    'Pigeon Net Installation':['New pigeon net installation','Old pigeon net replacement','Damaged / torn pigeon net','Loose or sagging pigeon net','Pigeon net fixing / repair','Balcony bird protection','Other / need inspection'],
+    'New Aluminium & uPVC Window / Door Installation':['New aluminium window','New uPVC window','New aluminium door','New uPVC door','New sliding window','New sliding door','Replacement of old window / door','New installation','Other / need consultation'],
+    'Not sure':['I am not sure what the problem is','Need an inspection','I will send a photo for checking','Other / need guidance']
+  };
+  function renderProblems(service){
+    const box=document.getElementById('kutbi-request-problems');
+    box.innerHTML='';
+    (problemSets[service]||problemSets['Not sure']).forEach(problem=>{
+      const b=document.createElement('button');
+      b.type='button'; b.dataset.problem=problem; b.textContent=problem;
+      b.addEventListener('click',()=>{state.problem=problem;show(3)});
+      box.appendChild(b);
+    });
+  }
+  modal.querySelectorAll('[data-service]').forEach(b=>b.addEventListener('click',()=>{state.service=b.dataset.service;state.problem='';renderProblems(state.service);show(2)}));
   document.getElementById('kutbi-request-photo').addEventListener('change',e=>{state.photos=e.target.files.length;document.getElementById('kutbi-photo-status').textContent=state.photos?state.photos+' photo'+(state.photos>1?'s':'')+' selected. Please attach them in WhatsApp after the request opens.':'No photo selected. You can continue without a photo.'});
   document.getElementById('kutbi-skip-photo').addEventListener('click',()=>show(4));
   document.getElementById('kutbi-request-review').addEventListener('click',()=>{
