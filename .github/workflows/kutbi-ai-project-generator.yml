@@ -23,7 +23,7 @@ jobs:
 
       - name: Generate project details securely
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           REQUEST_ID: ${{ github.event.client_payload.request_id }}
         shell: python
         run: |
@@ -32,8 +32,8 @@ jobs:
           from urllib.request import Request, urlopen
           from urllib.error import HTTPError
           REQUEST_DIR=Path('.github/ai-project-requests'); RESULT_DIR=Path('images/projects/ai-results')
-          API='https://api.openai.com/v1/responses'; MODEL='gpt-5.6-luna'
-          if not os.environ.get('OPENAI_API_KEY'): raise SystemExit('Missing OPENAI_API_KEY repository secret.')
+          API='https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent'
+          if not os.environ.get('GEMINI_API_KEY'): raise SystemExit('Missing GEMINI_API_KEY repository secret.')
           request_id=str((os.environ.get('REQUEST_ID') or '').strip())
           req_path=REQUEST_DIR/(request_id+'.json') if request_id else None
           if not req_path or not req_path.exists(): raise SystemExit('AI request file not found.')
@@ -64,16 +64,18 @@ jobs:
           - date should be '''+default_date+''' unless the user explicitly gave another project date.
           - keywords must be an array of 5-12 strings.
           '''
-          payload={'model':MODEL,'input':instruction,'max_output_tokens':1200}
-          rq=Request(API,data=json.dumps(payload).encode(),headers={'Authorization':'Bearer '+os.environ['OPENAI_API_KEY'],'Content-Type':'application/json'},method='POST')
+          payload={'contents':[{'parts':[{'text':instruction}]}],'generationConfig':{'responseMimeType':'application/json','maxOutputTokens':1200}}
+          rq=Request(API,data=json.dumps(payload).encode(),headers={'x-goog-api-key':os.environ['GEMINI_API_KEY'],'Content-Type':'application/json'},method='POST')
           try:
             with urlopen(rq,timeout=120) as response: data=json.loads(response.read().decode())
           except HTTPError as e:
-            raise SystemExit('OpenAI API error '+str(e.code)+': '+e.read().decode('utf-8','replace')[:1000])
-          def output_text(d):
-            if isinstance(d.get('output_text'),str) and d['output_text'].strip(): return d['output_text'].strip()
-            return '\n'.join(str(c.get('text','')) for i in d.get('output',[]) if isinstance(c,dict) for c in c.get('content',[]) if c.get('type')=='output_text').strip()
-          text=re.sub(r'^\s*```(?:json)?\s*|\s*```\s*$','',output_text(data),flags=re.I|re.S).strip()
+            raise SystemExit('Gemini API error '+str(e.code)+': '+e.read().decode('utf-8','replace')[:1000])
+          candidates=data.get('candidates') or []
+          if not candidates: raise SystemExit('Gemini returned no candidates.')
+          parts=((candidates[0].get('content') or {}).get('parts') or [])
+          output=''.join(str(p.get('text','')) for p in parts if isinstance(p,dict)).strip()
+          if not output: raise SystemExit('Gemini returned an empty response.')
+          text=re.sub(r'^\\s*```(?:json)?\\s*|\\s*```\\s*$','',output,flags=re.I|re.S).strip()
           result=json.loads(text); service=str(result.get('service') or '').strip()
           if service not in services: raise SystemExit('AI returned a service outside the approved Add Project list.')
           result={'id':request_id,'ok':True,'title':str(result.get('title') or '').strip(),'service':service,'area':str(result.get('area') or '').strip(),'date':str(result.get('date') or default_date).strip(),'description':str(result.get('description') or '').strip(),'seoTitle':str(result.get('seoTitle') or '').strip(),'seoDescription':str(result.get('seoDescription') or '').strip(),'keywords':[str(x).strip() for x in (result.get('keywords') or []) if str(x).strip()][:12]}
