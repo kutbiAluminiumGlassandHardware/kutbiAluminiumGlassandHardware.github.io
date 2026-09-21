@@ -1,0 +1,98 @@
+name: Kutbi AI Project Generator
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/ai-project-requests/**'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kutbi-ai-project-generator
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate project details securely
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        shell: python
+        run: |
+          import json, os, re, time
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+          from urllib.error import HTTPError
+          REQUEST_DIR=Path('.github/ai-project-requests'); RESULT_DIR=Path('images/projects/ai-results')
+          API='https://api.openai.com/v1/responses'; MODEL='gpt-5.6-luna'
+          if not os.environ.get('OPENAI_API_KEY'): raise SystemExit('Missing OPENAI_API_KEY repository secret.')
+          files=sorted(REQUEST_DIR.glob('*.json'))
+          if not files: raise SystemExit(0)
+          req_path=files[0]; req=json.loads(req_path.read_text(encoding='utf-8'))
+          request_id=str(req.get('id') or req_path.stem); prompt=str(req.get('prompt') or '').strip()
+          default_date=str(req.get('date') or time.strftime('%Y-%m-%d')); services=req.get('services') if isinstance(req.get('services'),list) else []
+          if not prompt or not services: raise SystemExit('Invalid AI project request.')
+          service_text='\n'.join('- '+str(x) for x in services)
+          instruction=f'''You are the content assistant for Kutbi Aluminium Glass & Hardware in Bengaluru, India.
+          Convert the user's natural-language project note into the existing Kutbi Add Project fields.
+
+          USER PROJECT NOTE:
+          {prompt}
+
+          APPROVED SERVICES — choose exactly one:
+          {service_text}
+
+          RULES:
+          - Do not invent facts, customer names, building names, measurements, prices, materials, causes, warranties or outcomes.
+          - Preserve the location stated by the user. If Bangalore is written, standardize it to Bengaluru.
+          - Choose the most specific service clearly supported by the user's note.
+          - Project title should clearly state the actual work and location, naturally and concisely.
+          - Project description should be factual, useful and SEO-friendly, but only use information supported by the user's note.
+          - Keep the description around 50-100 words.
+          - Create a concise SEO title and meta description.
+          - Keywords should be useful phrases directly supported by the project note, service and area.
+          - Return JSON only with exactly these keys: title, service, area, date, description, seoTitle, seoDescription, keywords
+          - date should be '''+default_date+''' unless the user explicitly gave another project date.
+          - keywords must be an array of 5-12 strings.
+          '''
+          payload={'model':MODEL,'input':instruction,'max_output_tokens':1200}
+          rq=Request(API,data=json.dumps(payload).encode(),headers={'Authorization':'Bearer '+os.environ['OPENAI_API_KEY'],'Content-Type':'application/json'},method='POST')
+          try:
+            with urlopen(rq,timeout=120) as response: data=json.loads(response.read().decode())
+          except HTTPError as e:
+            raise SystemExit('OpenAI API error '+str(e.code)+': '+e.read().decode('utf-8','replace')[:1000])
+          def output_text(d):
+            if isinstance(d.get('output_text'),str) and d['output_text'].strip(): return d['output_text'].strip()
+            return '\n'.join(str(c.get('text','')) for i in d.get('output',[]) if isinstance(c,dict) for c in c.get('content',[]) if c.get('type')=='output_text').strip()
+          text=re.sub(r'^\s*```(?:json)?\s*|\s*```\s*$','',output_text(data),flags=re.I|re.S).strip()
+          result=json.loads(text); service=str(result.get('service') or '').strip()
+          if service not in services: raise SystemExit('AI returned a service outside the approved Add Project list.')
+          result={'id':request_id,'ok':True,'title':str(result.get('title') or '').strip(),'service':service,'area':str(result.get('area') or '').strip(),'date':str(result.get('date') or default_date).strip(),'description':str(result.get('description') or '').strip(),'seoTitle':str(result.get('seoTitle') or '').strip(),'seoDescription':str(result.get('seoDescription') or '').strip(),'keywords':[str(x).strip() for x in (result.get('keywords') or []) if str(x).strip()][:12]}
+          if not result['title'] or not result['area'] or not result['description']: raise SystemExit('AI returned incomplete project details.')
+          RESULT_DIR.mkdir(parents=True,exist_ok=True); (RESULT_DIR/(request_id+'.json')).write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8'); req_path.unlink()
+
+      - name: Save AI result
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'Kutbi AI Project Generator'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add images/projects/ai-results .github/ai-project-requests
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Generate Kutbi project details'
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort || true; sleep $((attempt*2)); continue; }
+            if git push origin HEAD:main; then exit 0; fi
+            sleep $((attempt*2))
+          done
+          exit 1
