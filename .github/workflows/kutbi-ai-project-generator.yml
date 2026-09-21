@@ -1,10 +1,8 @@
 name: Kutbi AI Project Generator
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/ai-project-requests/**'
+  repository_dispatch:
+    types: [kutbi_ai_project_request]
 
 permissions:
   contents: write
@@ -26,6 +24,7 @@ jobs:
       - name: Generate project details securely
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          REQUEST_ID: ${{ github.event.client_payload.request_id }}
         shell: python
         run: |
           import json, os, re, time
@@ -35,9 +34,10 @@ jobs:
           REQUEST_DIR=Path('.github/ai-project-requests'); RESULT_DIR=Path('images/projects/ai-results')
           API='https://api.openai.com/v1/responses'; MODEL='gpt-5.6-luna'
           if not os.environ.get('OPENAI_API_KEY'): raise SystemExit('Missing OPENAI_API_KEY repository secret.')
-          files=sorted(REQUEST_DIR.glob('*.json'))
-          if not files: raise SystemExit(0)
-          req_path=files[0]; req=json.loads(req_path.read_text(encoding='utf-8'))
+          request_id=str((os.environ.get('REQUEST_ID') or '').strip())
+          req_path=REQUEST_DIR/(request_id+'.json') if request_id else None
+          if not req_path or not req_path.exists(): raise SystemExit('AI request file not found.')
+          req=json.loads(req_path.read_text(encoding='utf-8'))
           request_id=str(req.get('id') or req_path.stem); prompt=str(req.get('prompt') or '').strip()
           default_date=str(req.get('date') or time.strftime('%Y-%m-%d')); services=req.get('services') if isinstance(req.get('services'),list) else []
           if not prompt or not services: raise SystemExit('Invalid AI project request.')
