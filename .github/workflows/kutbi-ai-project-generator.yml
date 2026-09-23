@@ -19,29 +19,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Generate project details securely
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           REQUEST_ID: ${{ github.event.client_payload.request_id }}
+          PROJECT_PROMPT: ${{ github.event.client_payload.prompt }}
+          PROJECT_DATE: ${{ github.event.client_payload.date }}
+          PROJECT_SERVICES_JSON: ${{ toJson(github.event.client_payload.services) }}
         shell: python
         run: |
           import json, os, re, time
           from pathlib import Path
           from urllib.request import Request, urlopen
           from urllib.error import HTTPError
-          REQUEST_DIR=Path('.github/ai-project-requests'); RESULT_DIR=Path('images/projects/ai-results')
+          RESULT_DIR=Path('images/projects/ai-results')
           API='https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent'
           if not os.environ.get('GEMINI_API_KEY'): raise SystemExit('Missing GEMINI_API_KEY repository secret.')
-          request_id=str((os.environ.get('REQUEST_ID') or '').strip())
-          req_path=REQUEST_DIR/(request_id+'.json') if request_id else None
-          if not req_path or not req_path.exists(): raise SystemExit('AI request file not found.')
-          req=json.loads(req_path.read_text(encoding='utf-8'))
-          request_id=str(req.get('id') or req_path.stem); prompt=str(req.get('prompt') or '').strip()
-          default_date=str(req.get('date') or time.strftime('%Y-%m-%d')); services=req.get('services') if isinstance(req.get('services'),list) else []
-          if not prompt or not services: raise SystemExit('Invalid AI project request.')
-          service_text='\n'.join('- '+str(x) for x in services)
+          request_id=str(os.environ.get('REQUEST_ID') or '').strip()
+          prompt=str(os.environ.get('PROJECT_PROMPT') or '').strip()
+          default_date=str(os.environ.get('PROJECT_DATE') or time.strftime('%Y-%m-%d'))
+          try: services=json.loads(os.environ.get('PROJECT_SERVICES_JSON') or '[]')
+          except Exception: services=[]
+          if not request_id or not prompt or not isinstance(services,list) or not services: raise SystemExit('Invalid AI project request.')
+          service_text='\\n'.join('- '+str(x) for x in services)
           instruction=f'''You are the content assistant for Kutbi Aluminium Glass & Hardware in Bengaluru, India.
           Convert the user's natural-language project note into the existing Kutbi Add Project fields.
 
@@ -61,7 +63,7 @@ jobs:
           - Create a concise SEO title and meta description.
           - Keywords should be useful phrases directly supported by the project note, service and area.
           - Return JSON only with exactly these keys: title, service, area, date, description, seoTitle, seoDescription, keywords
-          - date should be '''+default_date+''' unless the user explicitly gave another project date.
+          - date should be {default_date} unless the user explicitly gave another project date.
           - keywords must be an array of 5-12 strings.
           '''
           payload={'contents':[{'parts':[{'text':instruction}]}],'generationConfig':{'responseMimeType':'application/json','maxOutputTokens':1200}}
@@ -75,12 +77,13 @@ jobs:
           parts=((candidates[0].get('content') or {}).get('parts') or [])
           output=''.join(str(p.get('text','')) for p in parts if isinstance(p,dict)).strip()
           if not output: raise SystemExit('Gemini returned an empty response.')
-          text=re.sub(r'^\\s*```(?:json)?\\s*|\\s*```\\s*$','',output,flags=re.I|re.S).strip()
+          text=re.sub(r'^\\s*\`\`\`(?:json)?\\s*|\\s*\`\`\`\\s*$','',output,flags=re.I|re.S).strip()
           result=json.loads(text); service=str(result.get('service') or '').strip()
           if service not in services: raise SystemExit('AI returned a service outside the approved Add Project list.')
           result={'id':request_id,'ok':True,'title':str(result.get('title') or '').strip(),'service':service,'area':str(result.get('area') or '').strip(),'date':str(result.get('date') or default_date).strip(),'description':str(result.get('description') or '').strip(),'seoTitle':str(result.get('seoTitle') or '').strip(),'seoDescription':str(result.get('seoDescription') or '').strip(),'keywords':[str(x).strip() for x in (result.get('keywords') or []) if str(x).strip()][:12]}
           if not result['title'] or not result['area'] or not result['description']: raise SystemExit('AI returned incomplete project details.')
-          RESULT_DIR.mkdir(parents=True,exist_ok=True); (RESULT_DIR/(request_id+'.json')).write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8'); req_path.unlink()
+          RESULT_DIR.mkdir(parents=True,exist_ok=True)
+          (RESULT_DIR/(request_id+'.json')).write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
       - name: Save AI result
         shell: bash
@@ -88,7 +91,7 @@ jobs:
           set -euo pipefail
           git config user.name 'Kutbi AI Project Generator'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add images/projects/ai-results .github/ai-project-requests
+          git add images/projects/ai-results
           if git diff --cached --quiet; then exit 0; fi
           git commit -m 'Generate Kutbi project details'
           for attempt in 1 2 3 4 5; do
