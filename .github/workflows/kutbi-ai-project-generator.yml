@@ -55,13 +55,13 @@ jobs:
 
           RULES:
           - Do not invent facts, customer names, building names, measurements, prices, materials, causes, warranties or outcomes.
-          - Preserve the location stated by the user. If Bangalore is written, standardize it to Bengaluru.
+          - Preserve the full project address stated by the user. Put the complete address in the Project Area field, including project/building name, street/road, layout/area, locality, city, state and PIN code whenever those details are provided. Never shorten a full address and never invent missing address details. If Bangalore is written, standardize it to Bengaluru.
           - Choose the most specific service clearly supported by the user's note.
           - Project title should clearly state the actual work and location, naturally and concisely.
-          - Project description should be factual, useful and SEO-friendly, but only use information supported by the user's note.
-          - Keep the description around 50-100 words.
+          - Project description should read like a polished ChatGPT-written Kutbi project description: natural, professional, clear and engaging, with the problem/work performed/location/result presented smoothly. Mention the actual repair, replacement, installation, adjustment or other work done and the practical outcome when supported by the user's note. Do not make it sound robotic or like a keyword list.
+          - Keep the description around 70-120 words.
           - Create a concise SEO title and meta description.
-          - Keywords should be useful phrases directly supported by the project note, service and area.
+          - Keywords should be useful phrases directly supported by the project note, service and full project area.
           - Return JSON only with exactly these keys: title, service, area, date, description, seoTitle, seoDescription, keywords
           - date should be {default_date} unless the user explicitly gave another project date.
           - keywords must be an array of 5-12 strings.
