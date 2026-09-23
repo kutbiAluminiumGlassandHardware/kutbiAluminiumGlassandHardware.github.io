@@ -10,8 +10,73 @@ function decode(s){const raw=String(s||'').replace(/\n/g,'');if(!raw)return '';t
 async function manifest(t){const meta=await apiGet(DIR+'/projects.json?ref='+BRANCH+'&t='+Date.now(),t);let text='';if(meta.content)text=decode(meta.content);else{const r=await fetch(RAW+DIR+'/projects.json?cache='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('Project Gallery metadata could not be downloaded.');text=await r.text()}let items;try{items=JSON.parse(text)}catch(e){throw Error('Project Gallery metadata is not valid JSON.')}if(!Array.isArray(items))throw Error('Project Gallery metadata must be a JSON array.');return{items,sha:meta.sha}}
 async function save(items,t){for(let attempt=0;attempt<5;attempt++){const m=await manifest(t);const body={message:'Add Kutbi project gallery entry',content:encode(JSON.stringify(items,null,2)+'\n'),branch:BRANCH,sha:m.sha};try{return await apiPut(DIR+'/projects.json',body,t)}catch(e){if(!String(e.message).includes('changed'))throw e;await new Promise(x=>setTimeout(x,500))}}throw Error('Could not update Project Gallery metadata. Please retry.')}
 function mode(){return document.querySelector('input[name="mode"]:checked')?.value||'single'}
+let editingProjectId='';
+async function loadEditProjects(){
+ const t=$('token')?.value.trim(); if(!t)return show('Please verify GitHub access first.');
+ try{
+  const m=await manifest(t),s=$('editProjectSelect'); if(!s)return;
+  s.innerHTML='<option value="">Select a project to edit…</option>';
+  m.items.forEach(p=>{const o=document.createElement('option');o.value=String(p.id||'');o.textContent=(p.title||'Untitled project')+' — '+(p.area||'');s.appendChild(o)});
+  $('editProjectPanel')?.classList.remove('hidden');
+  $('editProjectStatus').hidden=true;
+ }catch(e){show('Could not load existing projects.\\n'+(e.message||e),false)}
+}
+function startEdit(){
+ const id=$('editProjectSelect')?.value;if(!id)return;
+ const t=$('token')?.value.trim(); if(!t)return show('Please verify GitHub access first.');
+ manifest(t).then(m=>{
+  const p=m.items.find(x=>String(x.id)===String(id)); if(!p)throw Error('Project could not be found.');
+  editingProjectId=String(p.id);
+  $('title').value=p.title||'';
+  $('service').value=p.service||'';
+  $('area').value=p.area||'';
+  $('date').value=p.date||'';
+  $('description').value=p.description||'';
+  $('upload').hidden=true;$('updateProject').hidden=false;
+  $('editModeHint').hidden=false;
+  $('editProjectStatus').hidden=false;$('editProjectStatus').className='result ok';$('editProjectStatus').textContent='✓ Project loaded. Edit the fields above, then press “Update Existing Project”. Existing photos will remain unchanged.';
+  window.scrollTo({top:document.getElementById('title').getBoundingClientRect().top+window.scrollY-30,behavior:'smooth'});
+ }).catch(e=>show('Could not load project.\\n'+(e.message||e),false));
+}
+function cancelEdit(){
+ editingProjectId='';
+ $('upload').hidden=false;$('updateProject').hidden=true;$('editModeHint').hidden=true;
+ $('editProjectPanel')?.classList.add('hidden');$('editProjectSelect').value='';
+}
+async function updateExistingProject(){
+ const t=$('token')?.value.trim(),title=$('title')?.value.trim(),service=$('service')?.value.trim(),area=$('area')?.value.trim(),date=$('date')?.value||new Date().toISOString().slice(0,10),desc=$('description')?.value.trim();
+ if(!t)return show('Please verify GitHub access first.');
+ if(!editingProjectId)return show('Select a project to edit first.');
+ if(!title||!area)return show('Please enter the project title and project area.');
+ const b=$('updateProject');b.disabled=true;
+ try{
+  show('Loading the latest Project Gallery data…');
+  const m=await manifest(t),idx=m.items.findIndex(p=>String(p.id)===String(editingProjectId));
+  if(idx<0)throw Error('The project no longer exists in the current Project Gallery.');
+  const old=m.items[idx],updated=Object.assign({},old,{title,service,area,date,description,
+   keywords:[service,area,'Bengaluru','Bangalore','Kutbi Aluminium Glass & Hardware'],
+   seoTitle:`${title} | ${service} in ${area}`,
+   seoDescription:desc||`${service} completed in ${area}, Bengaluru by Kutbi Aluminium Glass & Hardware.`
+  });
+  m.items[idx]=updated;
+  await save(m.items,t);
+  show('✓ Existing project updated successfully.\\n✓ Project ID preserved.\\n✓ Existing photos were not changed or deleted.\\n✓ Project Gallery metadata updated.',true);
+  editingProjectId='';
+  b.hidden=true;$('upload').hidden=false;$('editModeHint').hidden=true;
+  await loadEditProjects();
+ }catch(e){show('Update failed.\\n'+(e.message||e)+'\\n\\nNo existing photos were deleted.',false)}
+ finally{b.disabled=false}
+}
+
 function refreshMode(v=mode()){['singleBox','multipleBox','beforeBox'].forEach(id=>$(id)?.classList.add('hidden'));$({single:'singleBox',multiple:'multipleBox',beforeafter:'beforeBox'}[v])?.classList.remove('hidden')}
 window.kutbiProjectMode=refreshMode;
 function slug(s){return String(s||'project').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,80)||'project'}
 async function run(){const t=$('token')?.value.trim(),title=$('title')?.value.trim(),service=$('service')?.value.trim(),area=$('area')?.value.trim(),date=$('date')?.value||new Date().toISOString().slice(0,10),desc=$('description')?.value.trim(),v=mode();let list=[];if(v==='single'&&$('single')?.files[0])list=[[$('single').files[0],'work']];if(v==='multiple')list=[...($('multiple')?.files||[])].map(f=>[f,'work']);if(v==='beforeafter')list=[...($('before')?.files||[])].map(f=>[f,'before']).concat([...($('after')?.files||[])].map(f=>[f,'after']));if(!t)return show('Please enter your GitHub access token.');if(!title||!area)return show('Please enter the project title and project area.');if(!list.length)return show(v==='beforeafter'?'Please choose Before or After images.':'Please choose a project photo.');if(list.length>MAX_FILES)return show('Maximum 150 photos per project.');if(list.some(x=>!/^image\/(jpeg|jpg|png|webp|gif)$/i.test(x[0].type)))return show('Please use JPG, PNG, WebP or GIF images.');const b=$('upload');b.disabled=true;try{show('Checking GitHub access and Project Gallery...');const m=await manifest(t),nTitle=title.toLowerCase().trim(),nArea=area.toLowerCase().trim(),nService=service.toLowerCase().trim();if(m.items.some(p=>String(p.title||'').toLowerCase().trim()===nTitle&&String(p.area||'').toLowerCase().trim()===nArea&&String(p.service||'').toLowerCase().trim()===nService))return show('A project with the same title, service and area already exists. No new photos were uploaded.');const imgs=[],stamp=Date.now();for(let i=0;i<list.length;i++){show(`Optimizing photo ${i+1} of ${list.length}...\n${list[i][0].name}`);const f=await optimize(list[i][0]);show(`Uploading photo ${i+1} of ${list.length}...\n${Math.round(f.size/1024)} KB`);const name=`${stamp}-${i+1}-${slug(list[i][0].name)}.jpg`;await apiPut(DIR+'/'+name,{message:'Add Kutbi project photo '+name,content:await b64(f),branch:BRANCH},t);imgs.push({path:DIR+'/'+name,type:list[i][1],sizeMB:(f.size/1048576).toFixed(2),originalName:list[i][0].name,alt:`${service} in ${area}, Bengaluru - Kutbi Aluminium Glass & Hardware`,keywords:[service,area,'Bengaluru','Bangalore','Kutbi Aluminium Glass & Hardware']})}const project={id:String(stamp),title,service,area,date,uploadedAt:new Date(stamp).toISOString(),description:desc,keywords:[service,area,'Bengaluru','Bangalore','Kutbi Aluminium Glass & Hardware'],seoTitle:`${title} | ${service} in ${area}`,seoDescription:desc||`${service} completed in ${area}, Bengaluru by Kutbi Aluminium Glass & Hardware.`,images:imgs};show('Saving project to Project Gallery...');const latest=await manifest(t);await save([project,...latest.items],t);show(`✓ Project uploaded successfully.\n✓ ${imgs.length} photo(s) optimized and uploaded.\n✓ Before/After labels preserved.\n✓ Project Gallery updated.\n✓ New uploads will appear at the top of the gallery.`,true)}catch(e){show('Upload failed.\n'+(e.message||e)+'\n\nNo existing gallery photos were deleted.',false)}finally{b.disabled=false}}
-document.addEventListener('DOMContentLoaded',()=>{refreshMode();$('upload')?.addEventListener('click',run)});
+document.addEventListener('DOMContentLoaded',()=>{
+ refreshMode();
+ $('upload')?.addEventListener('click',run);
+ $('toggleEditProject')?.addEventListener('click',loadEditProjects);
+ $('loadEditProject')?.addEventListener('click',startEdit);
+ $('cancelEditProject')?.addEventListener('click',cancelEdit);
+ $('updateProject')?.addEventListener('click',updateExistingProject);
+});
