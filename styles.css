@@ -179,3 +179,7 @@ main .hero .hero-card p{
 /* Kutbi repair-guide CTA colour — only View repair guide links */
 .kutbi-internal-links .repair-link{color:#0b5cab!important;text-decoration:underline!important;font-weight:800!important}
 .kutbi-internal-links .repair-link:hover{color:#064a8f!important}
+
+
+/* Explicitly keep problem-card CTA dark; only repair-guide CTA is blue */
+.kutbi-problem-section .problem-cta{color:#06183f!important;text-decoration:underline!important}
