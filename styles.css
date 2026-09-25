@@ -185,8 +185,8 @@ main .hero .hero-card p{
 .kutbi-problem-section .problem-cta{color:#06183f!important;text-decoration:underline!important}
 
 
-/* Problem CTA: black */
-.kutbi-problem-section .problem-cta{color:#000!important}
+/* Problem CTA: blue — only View Repair Service links */
+.kutbi-problem-section .problem-cta{color:#0b5cab!important;text-decoration:underline!important;font-weight:800!important}
 
 
 /* Repair-guide section: keep all text black except the CTA */
