@@ -174,3 +174,21 @@ main .hero .hero-card p{
   display:block!important;
   line-height:1.65!important;
 }
+
+
+/* Kutbi clickable text-link colour standard — colour only, no layout/content changes */
+main a:not(.btn):not(.whatsapp):not(.google-business-button),
+footer a:not(.btn):not(.whatsapp):not(.google-business-button),
+.kutbi-problem-card .problem-cta,
+.kutbi-repair-card .repair-link{
+  color:#0b5cab!important;
+  text-decoration:none;
+  font-weight:800;
+}
+main a:not(.btn):not(.whatsapp):not(.google-business-button):hover,
+footer a:not(.btn):not(.whatsapp):not(.google-business-button):hover,
+.kutbi-problem-card:hover .problem-cta,
+.kutbi-repair-card:hover .repair-link{
+  color:#064a8f!important;
+  text-decoration:underline;
+}
