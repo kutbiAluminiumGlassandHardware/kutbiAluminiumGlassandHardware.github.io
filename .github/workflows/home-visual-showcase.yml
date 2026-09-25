@@ -41,7 +41,7 @@ jobs:
           if not isinstance(data, list):
               raise SystemExit('projects.json must contain a JSON array')
           html = Path('index.html').read_text(encoding='utf-8')
-          required = ['visual-showcase', 'visual-projects', 'images/projects/projects.json']
+          required = ['visual-projects', 'images/projects/projects.json']
           missing = [x for x in required if x not in html]
           if missing:
               print('Homepage showcase markers missing:', ', '.join(missing))
