@@ -187,3 +187,12 @@ main .hero .hero-card p{
 
 /* Problem CTA: black */
 .kutbi-problem-section .problem-cta{color:#000!important}
+
+
+/* Repair-guide section: keep all text black except the CTA */
+.kutbi-internal-links h2,
+.kutbi-internal-links p,
+.kutbi-internal-links .repair-card-body,
+.kutbi-internal-links .repair-card-body > span:not(.repair-link){color:#000!important}
+.kutbi-internal-links .kutbi-repair-card{color:#000!important}
+.kutbi-internal-links .repair-link{color:#0b5cab!important}
