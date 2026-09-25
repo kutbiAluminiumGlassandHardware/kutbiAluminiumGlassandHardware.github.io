@@ -183,3 +183,7 @@ main .hero .hero-card p{
 
 /* Explicitly keep problem-card CTA dark; only repair-guide CTA is blue */
 .kutbi-problem-section .problem-cta{color:#06183f!important;text-decoration:underline!important}
+
+
+/* Problem CTA: black */
+.kutbi-problem-section .problem-cta{color:#000!important}
