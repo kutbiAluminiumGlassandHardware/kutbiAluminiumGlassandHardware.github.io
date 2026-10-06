@@ -23,13 +23,20 @@ async function loadEditProjects(){
  }catch(e){show('Could not load existing projects.\\n'+(e.message||e),false)}
 }
 async function loadDeleteProjects(){
- const t=$('token')?.value.trim(); if(!t)return show('Please verify GitHub access first.');
  try{
-  const m=await manifest(t),s=$('deleteProjectSelect'); if(!s)return;
+  const s=$('deleteProjectSelect'); if(!s)return;
+  s.innerHTML='<option value="">Loading projects…</option>';
+  const r=await fetch(RAW+DIR+'/projects.json?cache='+Date.now(),{cache:'no-store'});
+  if(!r.ok)throw Error('Project Gallery metadata could not be downloaded.');
+  const items=await r.json();
+  if(!Array.isArray(items))throw Error('Project Gallery metadata must be a JSON array.');
   s.innerHTML='<option value="">Select a project to delete…</option>';
-  m.items.forEach(p=>{const o=document.createElement('option');o.value=String(p.id||'');o.textContent=(p.title||'Untitled project')+' — '+(p.area||'');s.appendChild(o)});
+  items.forEach(p=>{const o=document.createElement('option');o.value=String(p.id||'');o.textContent=(p.title||'Untitled project')+' — '+(p.area||'');s.appendChild(o)});
   $('deleteProjectStatus').hidden=true;
- }catch(e){show('Could not load projects for deletion.\n'+(e.message||e),false)}
+ }catch(e){
+  const s=$('deleteProjectSelect'); if(s)s.innerHTML='<option value="">Could not load projects</option>';
+  const st=$('deleteProjectStatus'); if(st){st.hidden=false;st.className='result err';st.textContent='Could not load projects for deletion.\n'+(e.message||e)}
+ }
 }
 async function deleteExistingProject(){
  const t=$('token')?.value.trim(),s=$('deleteProjectSelect'),id=s?.value;
