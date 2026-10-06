@@ -2,7 +2,7 @@ const OWNER='kutbiAluminiumGlassandHardware',REPO='kutbiAluminiumGlassandHardwar
 const show=(m,ok=false)=>{const e=$('result');if(e){e.hidden=false;e.className='result '+(ok?'ok':'err');e.textContent=m}};
 const auth=t=>({Authorization:'Bearer '+t,Accept:'application/vnd.github+json','Content-Type':'application/json'});
 async function apiGet(path,t){const r=await fetch(API+path,{cache:'no-store',headers:auth(t)}),d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.message||`GitHub error ${r.status}`);return d}
-async function apiPut(path,body,t){for(let n=0;n<5;n++){const r=await fetch(API+path,{method:'PUT',headers:auth(t),body:JSON.stringify(body)}),d=await r.json().catch(()=>({}));if(r.ok)return d;if(r.status===409){await new Promise(x=>setTimeout(x,700*(n+1)));continue}if(r.status===429||r.status>=500){await new Promise(x=>setTimeout(x,1000*(n+1)));continue}if(r.status===401)throw Error('GitHub token is invalid or expired (401).');if(r.status===403)throw Error('GitHub token has no write permission for this repository (403).');throw Error(d.message||`GitHub error ${r.status}`)}throw Error('GitHub rejected the update because the file changed. Please press Optimize & Upload Project again.')}
+async function apiDelete(path,sha,t){for(let n=0;n<5;n++){const r=await fetch(API+path,{method:'DELETE',headers:auth(t),body:JSON.stringify({message:'Delete Kutbi project photo',sha,branch:BRANCH})}),d=await r.json().catch(()=>({}));if(r.ok)return d;if(r.status===409){await new Promise(x=>setTimeout(x,700*(n+1)));continue}if(r.status===429||r.status>=500){await new Promise(x=>setTimeout(x,1000*(n+1)));continue}if(r.status===401)throw Error('GitHub token is invalid or expired (401).');if(r.status===403)throw Error('GitHub token has no write permission for this repository (403).');throw Error(d.message||`GitHub error ${r.status}`)}throw Error('GitHub rejected the photo deletion because the file changed. Please retry.')}\nasync function apiPut(path,body,t){for(let n=0;n<5;n++){const r=await fetch(API+path,{method:'PUT',headers:auth(t),body:JSON.stringify(body)}),d=await r.json().catch(()=>({}));if(r.ok)return d;if(r.status===409){await new Promise(x=>setTimeout(x,700*(n+1)));continue}if(r.status===429||r.status>=500){await new Promise(x=>setTimeout(x,1000*(n+1)));continue}if(r.status===401)throw Error('GitHub token is invalid or expired (401).');if(r.status===403)throw Error('GitHub token has no write permission for this repository (403).');throw Error(d.message||`GitHub error ${r.status}`)}throw Error('GitHub rejected the update because the file changed. Please press Optimize & Upload Project again.')}
 const b64=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=()=>rej(Error('Could not read '+f.name));r.readAsDataURL(f)});
 function image(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),i=new Image();i.onload=()=>{URL.revokeObjectURL(u);res(i)};i.onerror=()=>{URL.revokeObjectURL(u);rej(Error('Could not open '+file.name))};i.src=u})}
 async function optimize(file){if(file.size<=MAX&&/^image\/(jpeg|jpg|webp)$/i.test(file.type))return file;const i=await image(file);let w=i.naturalWidth||i.width,h=i.naturalHeight||i.height,s=Math.min(1,1800/Math.max(w,h));w=Math.max(1,Math.round(w*s));h=Math.max(1,Math.round(h*s));for(let n=0;n<20;n++){const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');if(!x)throw Error('Your browser cannot process this image.');x.drawImage(i,0,0,w,h);const q=Math.max(.45,.84-n*.035),blob=await new Promise(r=>c.toBlob(r,'image/jpeg',q));if(blob&&blob.size<=MAX)return new File([blob],file.name.replace(/\.[^.]+$/,'')+'.jpg',{type:'image/jpeg'});w=Math.max(600,Math.round(w*.82));h=Math.max(600,Math.round(h*.82))}throw Error('Could not optimize '+file.name+' below 2 MB.')}
@@ -20,6 +20,46 @@ async function loadEditProjects(){
   $('editProjectPanel')?.classList.remove('hidden');
   $('editProjectStatus').hidden=true;
  }catch(e){show('Could not load existing projects.\\n'+(e.message||e),false)}
+}
+async function loadDeleteProjects(){
+ const t=$('token')?.value.trim(); if(!t)return show('Please verify GitHub access first.');
+ try{
+  const m=await manifest(t),s=$('deleteProjectSelect'); if(!s)return;
+  s.innerHTML='<option value="">Select a project to delete…</option>';
+  m.items.forEach(p=>{const o=document.createElement('option');o.value=String(p.id||'');o.textContent=(p.title||'Untitled project')+' — '+(p.area||'');s.appendChild(o)});
+  $('deleteProjectStatus').hidden=true;
+ }catch(e){show('Could not load projects for deletion.\n'+(e.message||e),false)}
+}
+async function deleteExistingProject(){
+ const t=$('token')?.value.trim(),s=$('deleteProjectSelect'),id=s?.value;
+ if(!t)return show('Please verify GitHub access first.');
+ if(!id)return show('Select a project to delete first.');
+ const m=await manifest(t),idx=m.items.findIndex(p=>String(p.id)===String(id));
+ if(idx<0)return show('The selected project no longer exists.');
+ const p=m.items[idx],photos=(p.images||[]).filter(x=>x&&x.path);
+ const label=p.title||'this project';
+ if(!window.confirm('Delete "'+label+'"?\n\nThis will permanently remove the Project Gallery entry and its '+photos.length+' uploaded photo(s). This cannot be undone.'))return;
+ if(!window.confirm('Final confirmation: permanently delete this project and its uploaded photos?'))return;
+ const b=$('deleteProject');b.disabled=true;
+ try{
+  $('deleteProjectStatus').hidden=false;$('deleteProjectStatus').className='result';$('deleteProjectStatus').textContent='Deleting project photos and gallery entry…';
+  const latest=await manifest(t),latestIdx=latest.items.findIndex(x=>String(x.id)===String(id));
+  if(latestIdx<0)throw Error('The project changed or was already deleted. Please reload the project list.');
+  const current=latest.items[latestIdx],currentPhotos=(current.images||[]).filter(x=>x&&x.path);
+  for(let i=0;i<currentPhotos.length;i++){
+   const path=String(currentPhotos[i].path).replace(/^\.?\//,'');
+   const meta=await apiGet(path+'?ref='+BRANCH+'&t='+Date.now(),t);
+   await apiDelete(path,meta.sha,t);
+  }
+  latest.items.splice(latestIdx,1);
+  await save(latest.items,t);
+  $('deleteProjectStatus').className='result ok';
+  $('deleteProjectStatus').textContent='✓ Project deleted successfully.\n✓ Gallery entry removed.\n✓ Uploaded project photos removed.';
+  await loadDeleteProjects(); await loadEditProjects();
+ }catch(e){
+  $('deleteProjectStatus').className='result err';
+  $('deleteProjectStatus').textContent='Delete failed.\n'+(e.message||e)+'\n\nThe project metadata was not intentionally removed unless all photo deletions completed.';
+ }finally{b.disabled=false}
 }
 function startEdit(){
  const id=$('editProjectSelect')?.value;if(!id)return;
@@ -75,8 +115,8 @@ async function run(){const t=$('token')?.value.trim(),title=$('title')?.value.tr
 document.addEventListener('DOMContentLoaded',()=>{
  refreshMode();
  $('upload')?.addEventListener('click',run);
- $('toggleEditProject')?.addEventListener('click',loadEditProjects);
+ $('toggleEditProject')?.addEventListener('click',async()=>{await loadEditProjects();await loadDeleteProjects()});
  $('loadEditProject')?.addEventListener('click',startEdit);
  $('cancelEditProject')?.addEventListener('click',cancelEdit);
- $('updateProject')?.addEventListener('click',updateExistingProject);
+ $('updateProject')?.addEventListener('click',updateExistingProject);\n $('deleteProject')?.addEventListener('click',deleteExistingProject);\n $('deleteProjectSelect')?.addEventListener('focus',loadDeleteProjects);
 });
