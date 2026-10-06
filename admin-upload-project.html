@@ -31,12 +31,13 @@ async function verify(){
   if(!canWrite)throw Error('This GitHub token can access the repository but does not have write permission. Use a token with repository Contents write access.');
   hiddenToken.value=t;
   gateToken.value='';
-  window.dispatchEvent(new Event('kutbiProjectManagerUnlocked'));
   gate.hidden=true; manager.hidden=false;
+  window.dispatchEvent(new Event('kutbiProjectManagerUnlocked'));
+  if(window.loadDeleteProjects)window.loadDeleteProjects();
   result('✓ GitHub access verified. Add Project is now unlocked for this browser session.',true);
  }catch(e){result('Access denied. '+(e.message||String(e)));gateToken.select()}
  finally{unlock.disabled=false}
 }
 unlock.addEventListener('click',verify);gateToken.addEventListener('keydown',function(e){if(e.key==='Enter')verify()});
 })();
-</script><script src="admin-project-ai.js?v=20260923-1" defer></script><script src="admin-upload-project-v2.js?v=20261006-1" defer></script></body></html>
+</script><script src="admin-project-ai.js?v=20260923-1" defer></script><script src="admin-upload-project-v2.js?v=20261006-2" defer></script></body></html>
