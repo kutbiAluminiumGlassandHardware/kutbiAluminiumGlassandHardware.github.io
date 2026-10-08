@@ -48,8 +48,8 @@ function card(p){
  [['🛠️ ',p.service],['📍 ',p.area],['📅 ',p.date]].forEach(function(item){if(item[1]){const b=document.createElement('b');b.textContent=item[0]+item[1];meta.appendChild(b)}});
  head.appendChild(meta);card.appendChild(head);
  const photos=document.createElement('div');photos.className='home-project-photos';
- (p.images||[]).forEach(function(x){if(!x.path)return;const fig=document.createElement('figure');const link=document.createElement('a');link.href='project.html?id='+encodeURIComponent(p.id);link.setAttribute('aria-label','View full project: '+(p.title||p.seoTitle||'Kutbi completed project'));link.style.display='block';link.style.textDecoration='none';
- const img=document.createElement('img');img.src=x.path;img.alt=x.alt||((p.service||'Kutbi project')+' '+(p.area||'Bangalore')+' '+(x.type==='before'?'before':'after')+' photo');img.loading='lazy';
+ (p.images||[]).forEach(function(x){if(!x.path)return;const fig=document.createElement('figure');const link=document.createElement('a');link.href='#';link.setAttribute('aria-label','Open project photo');link.style.display='block';link.style.textDecoration='none';link.addEventListener('click',function(e){e.preventDefault();openPhoto(x.path,altFor(p,x),x.type==='before'?'Before':(x.type==='after'?'After / Completed Work':'Completed Work'))});
+ const img=document.createElement('img');img.src=x.path;img.alt=altFor(p,x);img.loading='lazy';
  const cap=document.createElement('figcaption');cap.textContent=x.type==='before'?'Before':'After / Completed Work';link.append(img,cap);fig.appendChild(link);photos.appendChild(fig)});
  if(photos.children.length)card.appendChild(photos);
  const content=document.createElement('div');content.className='project-content';
