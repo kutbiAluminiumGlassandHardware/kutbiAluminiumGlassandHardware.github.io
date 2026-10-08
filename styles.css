@@ -202,3 +202,47 @@ main .hero .hero-card p{
 .project-gallery figure,.gallery figure,.home-project-photos figure,.visual-card,.project-media .photo{height:auto!important}
 .photo-card img{width:100%!important;height:auto!important;max-height:none!important;aspect-ratio:auto!important;object-fit:contain!important;background:#f4f6f9!important}
 @media(max-width:620px){.project-gallery img,.gallery img,.home-project-photos img,.visual-card img,.project-media .photo img,.photo-card img{height:auto!important;max-height:none!important;aspect-ratio:auto!important;object-fit:contain!important}}
+
+
+/* Kutbi global uploaded-photo preservation — CSS only
+   Show uploaded photos at their natural proportions: no crop, no forced zoom, no stretch. */
+main img:not([aria-hidden="true"]){
+  height:auto!important;
+  max-height:none!important;
+  aspect-ratio:auto!important;
+  object-fit:contain!important;
+}
+main figure img,
+main .project-gallery img,
+main .gallery img,
+main .home-project-photos img,
+main .visual-card img,
+main .project-media .photo img,
+main .photo-card img,
+main .homepage-photo-stage img{
+  width:100%!important;
+  height:auto!important;
+  max-height:none!important;
+  aspect-ratio:auto!important;
+  object-fit:contain!important;
+  transform:none!important;
+}
+main figure,
+main .project-gallery figure,
+main .gallery figure,
+main .home-project-photos figure,
+main .visual-card,
+main .project-media .photo,
+main .photo-card,
+main .homepage-photo-stage{
+  height:auto!important;
+  overflow:visible;
+}
+main .project-gallery figure:hover img,
+main .gallery figure:hover img,
+main .home-project-photos figure:hover img,
+main .visual-card:hover img,
+main .homepage-photo-stage:hover img,
+main .project-media .photo:hover img{
+  transform:none!important;
+}
