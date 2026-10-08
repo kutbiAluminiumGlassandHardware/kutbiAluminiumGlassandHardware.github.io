@@ -261,3 +261,72 @@ main .project-media .photo:hover img{
 .kutbi-core-services .kutbi-repair-card:hover>img{
   transform:none!important;
 }
+
+
+/* Kutbi unified uploaded-photo frame — fixed box, full image always visible */
+main .project-gallery figure,
+main .gallery figure,
+main .home-project-photos figure,
+main .photo-card,
+main .project-media .photo,
+main .homepage-photo-stage,
+main .visual-card,
+main .kutbi-core-services .kutbi-repair-card,
+main .kutbi-popular-repairs .kutbi-repair-card{
+  height:260px!important;
+  min-height:260px!important;
+  overflow:hidden!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  background:#f4f6f9!important;
+}
+
+main .project-gallery figure img,
+main .gallery figure img,
+main .home-project-photos figure img,
+main .photo-card img,
+main .project-media .photo img,
+main .homepage-photo-stage img,
+main .visual-card img,
+main .kutbi-core-services .kutbi-repair-card>img,
+main .kutbi-popular-repairs .kutbi-repair-card>img{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  min-height:0!important;
+  aspect-ratio:auto!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  transform:none!important;
+  background:#f4f6f9!important;
+}
+
+main .project-gallery figure:hover img,
+main .gallery figure:hover img,
+main .home-project-photos figure:hover img,
+main .photo-card:hover img,
+main .project-media .photo:hover img,
+main .homepage-photo-stage:hover img,
+main .visual-card:hover img,
+main .kutbi-core-services .kutbi-repair-card:hover>img,
+main .kutbi-popular-repairs .kutbi-repair-card:hover>img{
+  transform:none!important;
+}
+
+@media(max-width:620px){
+  main .project-gallery figure,
+  main .gallery figure,
+  main .home-project-photos figure,
+  main .photo-card,
+  main .project-media .photo,
+  main .homepage-photo-stage,
+  main .visual-card,
+  main .kutbi-core-services .kutbi-repair-card,
+  main .kutbi-popular-repairs .kutbi-repair-card{
+    height:210px!important;
+    min-height:210px!important;
+  }
+}
