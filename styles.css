@@ -330,3 +330,90 @@ main .kutbi-popular-repairs .kutbi-repair-card:hover>img{
     min-height:210px!important;
   }
 }
+
+
+/* Correct unified photo frames — frame images, never the text/card */
+main .project-gallery figure,
+main .gallery figure,
+main .home-project-photos figure,
+main .photo-card,
+main .project-media .photo,
+main .kutbi-core-services .kutbi-repair-card,
+main .kutbi-popular-repairs .kutbi-repair-card{
+  height:auto!important;
+  min-height:0!important;
+  display:block!important;
+  overflow:hidden!important;
+}
+
+main .project-gallery figure img,
+main .gallery figure img,
+main .home-project-photos figure img,
+main .photo-card img,
+main .project-media .photo img,
+main .kutbi-core-services .kutbi-repair-card>img,
+main .kutbi-popular-repairs .kutbi-repair-card>img{
+  display:block!important;
+  width:100%!important;
+  height:220px!important;
+  max-width:100%!important;
+  max-height:220px!important;
+  min-height:220px!important;
+  aspect-ratio:auto!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  transform:none!important;
+  background:#f4f6f9!important;
+}
+
+main .visual-card{
+  height:390px!important;
+  min-height:390px!important;
+}
+main .visual-card img{
+  width:100%!important;
+  height:260px!important;
+  max-height:260px!important;
+  min-height:260px!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  transform:none!important;
+}
+
+main .homepage-photo-stage{
+  height:auto!important;
+  min-height:0!important;
+}
+main .homepage-photo-stage img{
+  width:100%!important;
+  height:260px!important;
+  max-height:260px!important;
+  min-height:260px!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  transform:none!important;
+}
+
+@media(max-width:620px){
+  main .project-gallery figure img,
+  main .gallery figure img,
+  main .home-project-photos figure img,
+  main .photo-card img,
+  main .project-media .photo img,
+  main .kutbi-core-services .kutbi-repair-card>img,
+  main .kutbi-popular-repairs .kutbi-repair-card>img{
+    height:180px!important;
+    max-height:180px!important;
+    min-height:180px!important;
+  }
+  main .visual-card{
+    height:390px!important;
+    min-height:390px!important;
+  }
+  main .visual-card img,
+  main .homepage-photo-stage img{
+    height:210px!important;
+    max-height:210px!important;
+    min-height:210px!important;
+  }
+}
