@@ -246,3 +246,18 @@ main .homepage-photo-stage:hover img,
 main .project-media .photo:hover img{
   transform:none!important;
 }
+
+
+/* Kutbi core-service cards — preserve the complete uploaded photo */
+.kutbi-core-services .kutbi-repair-card>img{
+  display:block!important;
+  width:100%!important;
+  height:auto!important;
+  max-height:none!important;
+  aspect-ratio:auto!important;
+  object-fit:contain!important;
+  transform:none!important;
+}
+.kutbi-core-services .kutbi-repair-card:hover>img{
+  transform:none!important;
+}
