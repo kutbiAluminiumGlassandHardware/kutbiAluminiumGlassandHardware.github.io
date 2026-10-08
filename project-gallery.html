@@ -65,7 +65,7 @@ function card(p){
  const area=document.createElement('div');area.className='gallery-project-area';area.textContent=p.area||'Bengaluru';head.appendChild(area);
  const date=document.createElement('div');date.className='gallery-project-date';date.textContent=p.date||'';if(date.textContent)head.appendChild(date);
  card.appendChild(head);
- const descText=String(p.description||p.seoDescription||'');
+ const descValue=typeof p.description==='string'?p.description:(p.description&&typeof p.description==='object'?Object.values(p.description).filter(v=>typeof v==='string'&&v.trim()).join('\n'):'' ); const descText=String(descValue||p.seoDescription||'');
  if(descText){const intro=document.createElement('p');intro.className='project-desc gallery-project-intro';intro.textContent=descText;card.appendChild(intro)}
  const actions=document.createElement('div');actions.className='home-project-actions gallery-project-actions';
  actions.innerHTML='<a class="btn" href="tel:+919979204616">📞 Call Kutbi</a><a class="btn whatsapp" href="https://wa.me/919979204616?text='+encodeURIComponent('Hello Kutbi, I need similar work for '+(p.service||'this service'))+'">💬 WhatsApp</a><a class="btn reviews" href="https://www.google.com/search?q=Kutbi+Aluminium+Glass+Hardware+Bangalore&ludocid=10154872758820126751" target="_blank" rel="noopener">⭐ See Google Reviews</a>';
