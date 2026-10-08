@@ -196,3 +196,9 @@ main .hero .hero-card p{
 .kutbi-internal-links .repair-card-body > span:not(.repair-link){color:#000!important}
 .kutbi-internal-links .kutbi-repair-card{color:#000!important}
 .kutbi-internal-links .repair-link{color:#0b5cab!important}
+
+/* Kutbi project-photo full-image display fix — CSS only */
+.project-gallery img,.gallery img,.home-project-photos img,.visual-card img,.project-media .photo img{height:auto!important;max-height:none!important;aspect-ratio:auto!important;object-fit:contain!important;width:100%!important;background:#f4f6f9!important}
+.project-gallery figure,.gallery figure,.home-project-photos figure,.visual-card,.project-media .photo{height:auto!important}
+.photo-card img{width:100%!important;height:auto!important;max-height:none!important;aspect-ratio:auto!important;object-fit:contain!important;background:#f4f6f9!important}
+@media(max-width:620px){.project-gallery img,.gallery img,.home-project-photos img,.visual-card img,.project-media .photo img,.photo-card img{height:auto!important;max-height:none!important;aspect-ratio:auto!important;object-fit:contain!important}}
