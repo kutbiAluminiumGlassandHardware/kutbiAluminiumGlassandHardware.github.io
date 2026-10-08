@@ -55,7 +55,7 @@ function card(p){
  const content=document.createElement('div');content.className='project-content';
  if(p.description||p.seoDescription){const desc=document.createElement('p');desc.className='project-desc';desc.textContent=p.description||p.seoDescription;content.appendChild(desc)}
  const actions=document.createElement('div');actions.className='home-project-actions';
- actions.innerHTML='<a class="btn" href="project.html?id='+encodeURIComponent(p.id)+'">🔎 View Full Project</a><a class="btn" href="tel:+919979204616">📞 Call Kutbi</a><a class="btn whatsapp" href="https://wa.me/919979204616?text='+encodeURIComponent('Hello Kutbi, I need similar work for '+(p.service||'this service'))+'">💬 WhatsApp</a>';
+ actions.innerHTML='<a class="btn" href="tel:+919979204616">📞 Call Kutbi</a><a class="btn whatsapp" href="https://wa.me/919979204616?text='+encodeURIComponent('Hello Kutbi, I need similar work for '+(p.service||'this service'))+'">💬 WhatsApp</a>';
  content.appendChild(actions);card.appendChild(content);gallery.appendChild(card)
 }
 function uniqueSorted(values){return [...new Set(values.filter(Boolean).map(areaName))].sort((a,b)=>a.localeCompare(b))}function buildFilters(){[...new Set(projects.map(p=>p.service).filter(Boolean))].sort((a,b)=>a.localeCompare(b)).forEach(v=>service.insertAdjacentHTML('beforeend','<option value="'+esc(v)+'">'+esc(v)+'</option>'));uniqueSorted(projects.map(p=>p.area)).forEach(v=>area.insertAdjacentHTML('beforeend','<option value="'+esc(v)+'">'+esc(v)+'</option>'))}
