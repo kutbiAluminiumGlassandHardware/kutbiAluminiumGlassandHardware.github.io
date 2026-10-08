@@ -44,7 +44,7 @@ function card(p){
  const card=document.createElement('article');card.className='home-project';
  const head=document.createElement('div');head.className='home-project-head';
  const title=document.createElement('h3');title.textContent=p.title||p.seoTitle||'Kutbi Completed Project';head.appendChild(title);
- const meta=document.createElement('div');meta.className='project-meta';meta.textContent=[p.service,p.area,p.date].filter(Boolean).join(' · ');head.appendChild(meta);card.appendChild(head);
+ const meta=document.createElement('div');meta.className='project-meta';meta.textContent=[p.area,p.date].filter(Boolean).join(' · ');head.appendChild(meta);card.appendChild(head);
  const photos=document.createElement('div');photos.className='home-project-photos';
  (p.images||[]).forEach(function(x){if(!x.path)return;const fig=document.createElement('figure');const link=document.createElement('a');link.href='#';link.setAttribute('aria-label','Open project photo');link.style.display='block';link.style.textDecoration='none';link.addEventListener('click',function(e){e.preventDefault();openPhoto(x.path,altFor(p,x),x.type==='before'?'Before':(x.type==='after'?'After / Completed Work':'Completed Work'))});
  const img=document.createElement('img');img.src=x.path;img.alt=altFor(p,x);img.loading='lazy';
